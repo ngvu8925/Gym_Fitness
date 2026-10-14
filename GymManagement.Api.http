@@ -1,0 +1,17 @@
+###
+GET http://localhost:5268/api/HoiVien?tuKhoa=tran
+
+###
+PUT http://localhost:5268/api/HoiVien/2
+Content-Type: application/json
+
+{
+  "hoTen": "Trần Thị Test Đã Sửa",
+  "gioiTinh": "Nữ",
+  "sdt": "0909999999",
+  "email": "test@gmail.com",
+  "diaChi": "Đà Nẵng"
+}
+
+###
+DELETE http://localhost:5268/api/HoiVien/2
