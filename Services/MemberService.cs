@@ -18,15 +18,9 @@ namespace GymManagement.Api.Services
             if (string.IsNullOrWhiteSpace(member.Phone))
                 return (false, "Phone number is required", 0);
 
-            try
-            {
-                int memberId = _repo.Add(member);
-                return (true, "Member added successfully", memberId);
-            }
-            catch (Exception ex)
-            {
-                return (false, "Error: " + ex.Message, 0);
-            }
+            // Lỗi DB để middleware trả JSON lỗi thống nhất.
+            int memberId = _repo.Add(member);
+            return (true, "Member added successfully", memberId);
         }
 
         public (bool Success, string Message) Update(int memberId, MemberRequest member)

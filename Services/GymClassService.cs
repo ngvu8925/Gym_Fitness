@@ -77,15 +77,9 @@ namespace GymManagement.Api.Services
 
         public (bool Success, string Message, int EnrollmentId) Enroll(ClassEnrollmentRequest req)
         {
-            try
-            {
-                int enrollmentId = _repo.Enroll(req);
-                return (true, "Class enrolled successfully", enrollmentId);
-            }
-            catch (Exception ex)
-            {
-                return (false, "Error: " + ex.Message, 0);
-            }
+            // Lỗi DB (trùng đăng kí, lớp không tồn tại...) để middleware trả JSON lỗi thống nhất.
+            int enrollmentId = _repo.Enroll(req);
+            return (true, "Class enrolled successfully", enrollmentId);
         }
     }
 }

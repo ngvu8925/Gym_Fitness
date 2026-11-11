@@ -10,15 +10,9 @@ namespace GymManagement.Api.Services
 
         public (bool Success, string Message) CheckIn(int memberId)
         {
-            try
-            {
-                _repo.CheckIn(memberId);
-                return (true, "Check-in successful");
-            }
-            catch (Exception ex)
-            {
-                return (false, "Error: " + ex.Message);
-            }
+            // Lỗi DB (SP văng exception) để pipeline ExceptionHandlingMiddleware xử lý thống nhất.
+            _repo.CheckIn(memberId);
+            return (true, "Check-in successful");
         }
 
         public void CheckOut(int attendanceId) => _repo.CheckOut(attendanceId);

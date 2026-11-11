@@ -4,10 +4,14 @@ using GymManagement.Api.Models;
 using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-
 using Microsoft.OpenApi;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ===== Serilog: Console + file Logs/log-YYYYMMDD.txt (rolling theo ngày), đọc từ appsettings.json =====
+builder.Host.UseSerilog((context, loggerConfiguration) =>
+    loggerConfiguration.ReadFrom.Configuration(context.Configuration));
 
 // Fail-fast: lỗi cấu hình phải hiện rõ khi khởi động thay vì lỗi mơ hồ lúc chạy.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -129,7 +133,10 @@ var corsPolicyName = builder.Environment.IsDevelopment() ? "AllowAll" : "Allowed
 
 var app = builder.Build();
 
-app.UseExceptionMiddleware();
+// Middleware thứ tự: Exception bọc ngoài cùng -> RequestLogging -> Swagger/CORS/Auth.
+// Nhờ vậy mọi lỗi từ các middleware/controller bên dưới đều được bắt và log.
+app.UseExceptionHandling();
+app.UseRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {

@@ -75,21 +75,15 @@ namespace GymManagement.Api.Services
             if (req.StartDate.Date < DateTime.Today)
                 return (false, "Start date cannot be in the past", 0, 0);
 
-            try
-            {
-                // Business rule: hiển thị "Cash" nhưng DB lưu tên tiếng Việt.
-                var paymentMethod = string.Equals(req.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase)
-                    ? "Tiền mặt"
-                    : req.PaymentMethod;
-                req.PaymentMethod = paymentMethod;
+            // Business rule: hiển thị "Cash" nhưng DB lưu tên tiếng Việt.
+            var paymentMethod = string.Equals(req.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase)
+                ? "Tiền mặt"
+                : req.PaymentMethod;
+            req.PaymentMethod = paymentMethod;
 
-                var (registrationId, discountAmount) = _repo.Register(req);
-                return (true, "Package registered successfully", registrationId, discountAmount);
-            }
-            catch (Exception ex)
-            {
-                return (false, "Error: " + ex.Message, 0, 0);
-            }
+            // Lỗi DB (gói không tồn tại, mã ưu đãi sai...) để middleware trả JSON lỗi thống nhất.
+            var (registrationId, discountAmount) = _repo.Register(req);
+            return (true, "Package registered successfully", registrationId, discountAmount);
         }
 
         public void Pause(PausePackageRequest req) => _repo.Pause(req);

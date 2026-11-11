@@ -1,3 +1,4 @@
+using GymManagement.Api.Common.Exceptions;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Services;
@@ -27,8 +28,9 @@ namespace GymManagement.Api.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult GetById(int memberId)
         {
-            var member = _service.GetById(memberId);
-            if (member == null) return NotFound(new { message = "Member not found" });
+            // Service throw NotFoundException => middleware tự map thành 404 + ErrorResponse.
+            var member = _service.GetById(memberId)
+                ?? throw new NotFoundException("Member not found");
             return Ok(member);
         }
 
