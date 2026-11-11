@@ -20,10 +20,15 @@ namespace GymManagement.Api.Repositories
 
         public DataTable ExecuteQuery(string spName, params SqlParameter[] parameters)
         {
+            return ExecuteQuery(spName, parameters, isStoredProcedure: true);
+        }
+
+        public DataTable ExecuteQuery(string sql, SqlParameter[] parameters, bool isStoredProcedure)
+        {
             var dt = new DataTable();
             using var conn = new SqlConnection(_connString);
-            using var cmd = new SqlCommand(spName, conn);
-            cmd.CommandType = CommandType.StoredProcedure;
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.CommandType = isStoredProcedure ? CommandType.StoredProcedure : CommandType.Text;
             if (parameters != null) cmd.Parameters.AddRange(parameters);
 
             using var da = new SqlDataAdapter(cmd);

@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gym Fitness - Cổng Hội Viên (User Portal)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #111418;
+            --ink-2: #1b1f26;
+            --canvas: #0c0e12;
+            --paper: #171b22;
+            --paper-2: #212631;
+            --volt: #d9ff3d;
+            --volt-dark: #b8dc25;
+            --coral: #ff5a36;
+            --cyan: #38bdf8;
+            --steel: #8e95a5;
+            --line: #29303d;
+            --text: #f0f2f5;
+            --text-muted: #9aa1b0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--canvas);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, .display {
+            font-family: 'Oswald', sans-serif;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Top Header */
+        header.topbar {
+            background: var(--ink);
+            border-bottom: 1px solid var(--line);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            font-family: 'Oswald', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .brand-logo em {
+            color: var(--volt);
+            font-style: normal;
+        }
+
+        .badge-user {
+            background: rgba(217, 255, 61, 0.15);
+            color: var(--volt);
+            border: 1px solid var(--volt);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--paper-2);
+            color: #fff;
+            border: 1px solid var(--line);
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-switch:hover {
+            background: var(--volt);
+            color: var(--ink);
+            border-color: var(--volt);
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--paper);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--volt);
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Main Container */
+        .portal-layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* Hero / Card Section */
+        .member-hero {
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 24px;
+            margin-bottom: 36px;
+        }
+
+        @media (max-width: 900px) {
+            .member-hero {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Digital Membership Card */
+        .digital-card {
+            background: linear-gradient(135deg, #1f2530 0%, #111419 100%);
+            border: 1px solid rgba(217, 255, 61, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 230px;
+        }
+
+        .digital-card::after {
+            content: "";
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(217, 255, 61, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-logo {
+            font-family: 'Oswald', sans-serif;
+            font-size: 20px;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .card-logo span {
+            color: var(--volt);
+        }
+
+        .card-tier {
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            background: var(--volt);
+            color: var(--ink);
+            font-weight: 700;
+            border-radius: 4px;
+        }
+
+        .card-mid {
+            margin: 20px 0;
+        }
+
+        .card-num {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #e5e7eb;
+            margin-bottom: 4px;
+        }
+
+        .card-holder {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 12px;
+            color: var(--steel);
+        }
+
+        .card-bottom strong {
+            display: block;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        /* Quick Member Status Panel */
+        .member-summary {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+        }
+
+        .summary-header h2 {
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .member-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .member-selector select {
+            background: var(--paper-2);
+            color: #fff;
+            border: 1px solid var(--line);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-item {
+            background: var(--ink);
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+        }
+
+        .stat-item .label {
+            font-size: 12px;
+            color: var(--steel);
+            margin-bottom: 4px;
+        }
+
+        .stat-item .value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .stat-item .value.accent {
+            color: var(--volt);
+        }
+
+        .quick-action-bar {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn.primary {
+            background: var(--volt);
+            color: var(--ink);
+        }
+
+        .btn.primary:hover {
+            background: var(--volt-dark);
+        }
+
+        .btn.secondary {
+            background: var(--paper-2);
+            color: #fff;
+            border: 1px solid var(--line);
+        }
+
+        .btn.secondary:hover {
+            background: #2a3240;
+        }
+
+        /* Navigation Tabs */
+        .portal-nav {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 28px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .portal-nav button {
+            background: none;
+            border: none;
+            color: var(--steel);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 12px 18px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .portal-nav button:hover {
+            color: #fff;
+        }
+
+        .portal-nav button.active {
+            color: var(--volt);
+        }
+
+        .portal-nav button.active::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--volt);
+            border-radius: 3px;
+        }
+
+        /* Section / Tab Content */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Package Pricing Cards Grid */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .package-card {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .package-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--volt);
+        }
+
+        .package-card.featured {
+            border: 2px solid var(--volt);
+            background: linear-gradient(180deg, #1d222b 0%, #171b22 100%);
+        }
+
+        .featured-tag {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: var(--volt);
+            color: var(--ink);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .pkg-title {
+            font-size: 22px;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .pkg-type {
+            font-size: 12px;
+            color: var(--steel);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+        }
+
+        .pkg-price {
+            font-family: 'Oswald', sans-serif;
+            font-size: 32px;
+            color: var(--volt);
+            margin-bottom: 6px;
+        }
+
+        .pkg-price span {
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--steel);
+            font-weight: normal;
+        }
+
+        .pkg-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 14px 0 24px;
+            min-height: 40px;
+        }
+
+        /* Classes Cards Grid */
+        .classes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .class-card {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .class-card:hover {
+            border-color: var(--cyan);
+        }
+
+        .class-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .class-name {
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .class-capacity {
+            font-size: 12px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--cyan);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .class-detail {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Trainers Grid */
+        .trainers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .trainer-card {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .trainer-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--paper-2);
+            border: 2px solid var(--volt);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .trainer-info h4 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .trainer-info p {
+            font-size: 12px;
+            color: var(--steel);
+        }
+
+        /* Forms in Portal */
+        .panel-box {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .panel-box h3 {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 18px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            color: var(--steel);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .field input, .field select, .field textarea {
+            width: 100%;
+            background: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: #fff;
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .field input:focus, .field select:focus, .field textarea:focus {
+            border-color: var(--volt);
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            padding: 26px;
+            position: relative;
+        }
+
+        .modal-dialog h3 {
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--steel);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Toast Messages */
+        #msgBox {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 999;
+        }
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.ok {
+            background: #14532d;
+            color: #bbf7d0;
+            border: 1px solid #22c55e;
+        }
+
+        .toast.err {
+            background: #7f1d1d;
+            color: #fecaca;
+            border: 1px solid #ef4444;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="topbar">
+        <div class="brand-box">
+            <div class="brand-logo">GYM<em>FITNESS</em></div>
+            <span class="badge-user">USER PORTAL</span>
+        </div>
+        <div class="topbar-actions">
+            <a href="admin.html" class="btn-switch">
+                ⚙️ Đến Admin Dashboard
+            </a>
+            <div class="user-chip" id="topUserChip" style="display: none;">
+                <div class="user-avatar" id="avatarInitial">U</div>
+                <span class="user-name" id="topUserName">Hội viên</span>
+            </div>
+            <button class="btn secondary" id="btnLogout" style="padding: 6px 12px; font-size: 12px; display: none;" onclick="logout()">
+                Đăng xuất
+            </button>
+        </div>
+    </header>
+
+    <!-- Member Login Section -->
+    <div id="memberLoginSection" style="display: none; max-width: 440px; margin: 50px auto; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 32px; box-shadow: 0 16px 40px rgba(0,0,0,0.5);">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="font-family: 'Oswald', sans-serif; font-size: 28px; color: #fff;">ĐĂNG NHẬP <span style="color: var(--volt);">HỘI VIÊN</span></div>
+            <p style="color: var(--steel); font-size: 13px; margin-top: 6px;">Cổng thông tin tập luyện & thẻ hội viên Gym Fitness</p>
+        </div>
+
+        <div id="adminNoticeBanner" style="display: none; background: rgba(255, 90, 54, 0.15); border: 1px solid var(--coral); color: #ff8566; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 18px; line-height: 1.5;">
+            ⚠️ Bạn vừa từ trang <strong>Admin</strong> sang. Vui lòng đăng nhập bằng tài khoản <strong>Hội viên</strong> dưới đây (bấm nút 1-Click để thử nhanh) hoặc quay lại trang Admin.
+        </div>
+
+        <div class="field" style="margin-bottom: 14px;">
+            <label>Tên đăng nhập</label>
+            <input id="userLoginUsername" type="text" value="member1" placeholder="Nhập tên đăng nhập">
+        </div>
+        <div class="field" style="margin-bottom: 20px;">
+            <label>Mật khẩu</label>
+            <input id="userLoginPassword" type="password" value="123123" placeholder="Nhập mật khẩu">
+        </div>
+
+        <button class="btn primary" style="width: 100%; padding: 12px; margin-bottom: 12px; font-size: 15px;" onclick="memberLogin()">
+            Đăng nhập Cổng Hội Viên
+        </button>
+
+        <button class="btn secondary" style="width: 100%; padding: 10px; font-size: 13px; margin-bottom: 18px;" onclick="quickLoginMember1()">
+            ⚡ 1-Click Đăng nhập ngay (member1 / 123123)
+        </button>
+
+        <div style="text-align: center; border-top: 1px solid var(--line); padding-top: 16px;">
+            <a href="admin.html" style="color: var(--steel); font-size: 13px; text-decoration: none; font-weight: 500;">← Quay lại trang Quản trị (Admin Dashboard)</a>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <main class="portal-layout" style="display: none;">
+
+        <!-- Hero Section: Digital Membership Card + Summary Info -->
+        <section class="member-hero">
+            <!-- Digital Member Card -->
+            <div class="digital-card">
+                <div class="card-top">
+                    <div class="card-logo">GYM<em>PRO</em> PASS</div>
+                    <span class="card-tier" id="cardTierBadge">ACTIVE</span>
+                </div>
+                <div class="card-mid">
+                    <div class="card-num" id="cardMemberId">ID: #000000</div>
+                    <div class="card-holder" id="cardMemberName">NGUYEN VAN A</div>
+                </div>
+                <div class="card-bottom">
+                    <div>
+                        <span style="font-size: 11px;">GÓI TẬP HIỆN TẠI</span>
+                        <strong id="cardPkgName">Chưa có gói tập</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 11px;">HẠN SỬ DỤNG</span>
+                        <strong id="cardExpDate">--/--/----</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Summary Info -->
+            <div class="member-summary">
+                <div class="summary-header">
+                    <h2>Xin chào, <span id="welcomeName" style="color: var(--volt);">Hội viên</span>!</h2>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="label">Trạng thái</div>
+                        <div class="value accent" id="sumStatus">Đang hoạt động</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label">Số điện thoại</div>
+                        <div class="value" id="sumPhone" style="font-size: 16px; font-family: 'Inter';">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label">Điểm danh hôm nay</div>
+                        <div class="value" id="sumCheckIn" style="font-size: 15px; font-family: 'Inter';">Chưa check-in</div>
+                    </div>
+                </div>
+
+                <div class="quick-action-bar">
+                    <button class="btn primary" onclick="quickCheckIn()">
+                        ⚡ Tự Check-in ngay
+                    </button>
+                    <button class="btn secondary" onclick="switchTab('tabMyPackages')">
+                        Xem gói tập
+                    </button>
+                    <button class="btn secondary" onclick="switchTab('tabClasses')">
+                        Lịch lớp học
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs for User -->
+        <nav class="portal-nav" id="portalNav">
+            <button class="active" onclick="switchTab('tabPackages')">🏷️ Gói tập & Ưu đãi</button>
+            <button onclick="switchTab('tabClasses')">📅 Lớp học & Huấn luyện viên</button>
+            <button onclick="switchTab('tabMyPackages')">📋 Gói tập của tôi</button>
+            <button onclick="switchTab('tabProfile')">👤 Hồ sơ cá nhân</button>
+        </nav>
+
+        <!-- TAB 1: EXPLORE PACKAGES -->
+        <section id="tabPackages" class="tab-panel active">
+            <div style="margin-bottom: 20px;">
+                <h2>Danh sách Gói tập Phòng Gym</h2>
+                <p style="color: var(--steel); font-size: 14px;">Chọn gói tập phù hợp để bắt đầu hành trình rèn luyện sức khỏe.</p>
+            </div>
+            <div class="packages-grid" id="packagesListContainer">
+                <p style="color: var(--steel);">Đang tải danh sách gói tập...</p>
+            </div>
+        </section>
+
+        <!-- TAB 2: CLASSES & TRAINERS -->
+        <section id="tabClasses" class="tab-panel">
+            <div style="margin-bottom: 20px;">
+                <h2>Lớp học rèn luyện</h2>
+                <p style="color: var(--steel); font-size: 14px;">Đăng ký tham gia các lớp Yoga, Boxing, Spinning cùng huấn luyện viên.</p>
+            </div>
+            <div class="classes-grid" id="classesListContainer">
+                <p style="color: var(--steel);">Đang tải danh sách lớp học...</p>
+            </div>
+
+            <div style="margin-top: 40px; margin-bottom: 20px;">
+                <h2>Đội ngũ Huấn luyện viên (Personal Trainers)</h2>
+                <p style="color: var(--steel); font-size: 14px;">Các HLV giàu kinh nghiệm sẵn sàng đồng hành cùng bạn.</p>
+            </div>
+            <div class="trainers-grid" id="trainersListContainer">
+                <p style="color: var(--steel);">Đang tải danh sách huấn luyện viên...</p>
+            </div>
+        </section>
+
+        <!-- TAB 3: MY PACKAGES & SUSPENSION -->
+        <section id="tabMyPackages" class="tab-panel">
+            <div class="panel-box">
+                <h3>Gói tập hiện tại & Gia hạn</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+                    Thông tin chi tiết về gói tập bạn đã đăng ký tại hệ thống phòng gym.
+                </p>
+                <div id="myCurrentPackageDetails" style="background: var(--ink); padding: 18px; border-radius: 10px; border: 1px solid var(--line); margin-bottom: 20px;">
+                    Đang tải thông tin gói tập của bạn...
+                </div>
+
+                <div style="border-top: 1px solid var(--line); padding-top: 20px;">
+                    <h4 style="color: #fff; margin-bottom: 10px;">Cần tạm ngưng gói tập?</h4>
+                    <p style="color: var(--steel); font-size: 13px; margin-bottom: 14px;">
+                        Nếu bạn có lịch công tác hoặc việc bận đột xuất, bạn có thể gửi yêu cầu tạm ngưng gói tập (bảo lưu thời hạn).
+                    </p>
+                    <div style="display: flex; gap: 12px; max-width: 500px;">
+                        <input id="pauseReasonInput" type="text" placeholder="Lý do tạm ngưng (vd: Đi công tác 2 tuần)" style="flex: 1; background: var(--ink); border: 1px solid var(--line); padding: 10px 14px; border-radius: 8px; color: #fff;">
+                        <button class="btn secondary" onclick="requestPausePackage()">Gửi yêu cầu</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: MY PROFILE -->
+        <section id="tabProfile" class="tab-panel">
+            <div class="panel-box" style="max-width: 700px;">
+                <h3>Cập nhật Hồ sơ cá nhân</h3>
+                <form id="profileForm" onsubmit="updateProfile(event)">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label>Họ và tên</label>
+                            <input id="profFullName" type="text" required>
+                        </div>
+                        <div class="field">
+                            <label>Số điện thoại</label>
+                            <input id="profPhone" type="text" required>
+                        </div>
+                        <div class="field">
+                            <label>Email</label>
+                            <input id="profEmail" type="email">
+                        </div>
+                        <div class="field">
+                            <label>Giới tính</label>
+                            <select id="profGender">
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Ngày sinh</label>
+                            <input id="profDob" type="date">
+                        </div>
+                        <div class="field">
+                            <label>Địa chỉ</label>
+                            <input id="profAddress" type="text">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn primary">Lưu thay đổi</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Register Package -->
+    <div class="modal-backdrop" id="modalRegPackage">
+        <div class="modal-dialog">
+            <button class="modal-close" onclick="closeModal('modalRegPackage')">&times;</button>
+            <h3>Đăng ký Gói tập</h3>
+            <p id="modalPkgSummary" style="color: var(--volt); font-size: 14px; margin-bottom: 16px; font-weight: 600;"></p>
+            <input type="hidden" id="modalPkgId">
+
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Hội viên đăng ký</label>
+                <input id="modalMemberName" type="text" disabled style="opacity: 0.7;">
+            </div>
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Ngày và giờ bắt đầu</label>
+                <input id="modalStartDate" type="datetime-local" required>
+            </div>
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Mã giảm giá (nếu có)</label>
+                <input id="modalPromoCode" type="text" placeholder="Ví dụ: SUMMER2026">
+            </div>
+            <div class="field" style="margin-bottom: 20px;">
+                <label>Phương thức thanh toán</label>
+                <select id="modalPaymentMethod">
+                    <option value="Cash">Tiền mặt tại quầy</option>
+                    <option value="Transfer">Chuyển khoản ngân hàng</option>
+                    <option value="Card">Thẻ POS</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn secondary" onclick="closeModal('modalRegPackage')">Hủy</button>
+                <button class="btn primary" onclick="submitRegisterPackage()">Xác nhận đăng ký</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box (Toast) -->
+    <div id="msgBox"></div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let activeMember = null;
+        let packagesData = [];
+        let memberPackages = [];
+        let classesData = [];
+
+        function toast(msg, ok = true) {
+            const box = document.getElementById('msgBox');
+            const el = document.createElement('div');
+            el.className = 'toast ' + (ok ? 'ok' : 'err');
+            el.textContent = msg;
+            box.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        async function api(method, path, body) {
+            try {
+                const token = localStorage.getItem('token');
+                const headers = body ? { 'Content-Type': 'application/json' } : {};
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const res = await fetch(API_BASE + path, {
+                    method,
+                    headers,
+                    body: body ? JSON.stringify(body) : undefined
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    toast(data.message || ('Lỗi ' + res.status), false);
+                    return null;
+                }
+                return data;
+            } catch (e) {
+                toast('Không thể kết nối đến máy chủ API.', false);
+                return null;
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.portal-nav button').forEach(b => b.classList.remove('active'));
+            
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
+
+            const btn = Array.from(document.querySelectorAll('.portal-nav button')).find(b => b.getAttribute('onclick')?.includes(tabId));
+            if (btn) btn.classList.add('active');
+        }
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('open');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('open');
+        }
+
+        function showMemberLogin(isAdmin = false) {
+            document.querySelector('.portal-layout').style.display = 'none';
+            document.getElementById('memberLoginSection').style.display = 'block';
+            document.getElementById('topUserChip').style.display = 'none';
+            document.getElementById('btnLogout').style.display = 'none';
+            const banner = document.getElementById('adminNoticeBanner');
+            if (banner) banner.style.display = isAdmin ? 'block' : 'none';
+        }
+
+        function showPortal() {
+            document.querySelector('.portal-layout').style.display = 'block';
+            document.getElementById('memberLoginSection').style.display = 'none';
+            document.getElementById('topUserChip').style.display = 'flex';
+            document.getElementById('btnLogout').style.display = 'inline-flex';
+        }
+
+        async function memberLogin() {
+            const username = document.getElementById('userLoginUsername').value.trim();
+            const password = document.getElementById('userLoginPassword').value;
+            if (!username || !password) {
+                toast('Vui lòng nhập tên đăng nhập và mật khẩu!', false);
+                return;
+            }
+            const data = await api('POST', '/api/auth/login', { username, password });
+            if (data) {
+                if (data.token) localStorage.setItem('token', data.token);
+                localStorage.setItem('currentUser', JSON.stringify({ accountId: data.accountId, fullName: data.fullName, role: data.role }));
+                const role = String(data.role || '').toLowerCase();
+                if (role !== 'member') {
+                    toast('Tài khoản này là ' + data.role + ', chuyển đến Admin...', false);
+                    setTimeout(() => window.location.href = 'admin.html', 1000);
+                    return;
+                }
+                toast('Đăng nhập thành công hội viên: ' + data.fullName);
+                await initPortal();
+            }
+        }
+
+        async function quickLoginMember1() {
+            document.getElementById('userLoginUsername').value = 'member1';
+            document.getElementById('userLoginPassword').value = '123123';
+            await memberLogin();
+        }
+
+        async function initPortal() {
+            let session = null;
+            try { session = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch { }
+            const role = String(session?.role || '').toLowerCase();
+
+            if (!localStorage.getItem('token') || role !== 'member') {
+                showMemberLogin(role === 'admin');
+                return;
+            }
+
+            showPortal();
+
+            const portal = await api('GET', '/api/member-portal/me');
+            if (!portal || !portal.member) {
+                document.getElementById('myCurrentPackageDetails').textContent = 'Tài khoản chưa được liên kết với hồ sơ hội viên. Vui lòng liên hệ quản trị viên.';
+                document.getElementById('cardPkgName').textContent = 'Chưa có hồ sơ hội viên';
+                document.getElementById('cardExpDate').textContent = '--/--/----';
+                return;
+            }
+
+            activeMember = portal.member;
+            memberPackages = portal.packages || [];
+            selectMember(activeMember);
+
+            loadPackages();
+            loadClasses();
+            loadTrainers();
+        }
+
+        function selectMember(member) {
+            activeMember = member;
+
+            // Update top bar
+            document.getElementById('topUserName').textContent = member.fullName;
+            document.getElementById('avatarInitial').textContent = (member.fullName || 'U').charAt(0).toUpperCase();
+
+            // Update Hero Card
+            document.getElementById('cardMemberName').textContent = member.fullName;
+            document.getElementById('cardMemberId').textContent = 'ID: #' + String(member.memberId).padStart(6, '0');
+            document.getElementById('welcomeName').textContent = member.fullName;
+            document.getElementById('sumPhone').textContent = member.phone || member.phoneNumber || 'Chưa cập nhật';
+            document.getElementById('sumStatus').textContent = member.status ? 'Đang hoạt động' : 'Tạm khóa';
+
+            const currentPackage = memberPackages.find(item => isPackageCurrent(item)) || memberPackages[0];
+            document.getElementById('cardPkgName').textContent = currentPackage?.packageName || 'Chưa có gói tập';
+            document.getElementById('cardExpDate').textContent = currentPackage ? formatDateTime(currentPackage.endDate) : '--/--/----';
+            document.getElementById('cardTierBadge').textContent = currentPackage?.status || (member.status ? 'ACTIVE' : 'INACTIVE');
+
+            // Populate Profile Form
+            document.getElementById('profFullName').value = member.fullName || '';
+            document.getElementById('profPhone').value = member.phone || member.phoneNumber || '';
+            document.getElementById('profEmail').value = member.email || '';
+            document.getElementById('profGender').value = member.gender || 'Nam';
+            if (member.dateOfBirth) {
+                document.getElementById('profDob').value = member.dateOfBirth.substring(0, 10);
+            }
+            document.getElementById('profAddress').value = member.address || '';
+
+            // Update My Packages info
+            renderMyPackageInfo();
+        }
+
+        function formatDateTime(value) {
+            if (!value) return '--/--/----';
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('vi-VN');
+        }
+
+        function isPackageCurrent(item) {
+            const status = String(item.status || '').toLowerCase();
+            const end = item.endDate ? new Date(item.endDate).getTime() : 0;
+            return (status.includes('active') || status.includes('hoạt động') || status.includes('đang'))
+                && (!end || end >= Date.now());
+        }
+
+        async function loadPackages() {
+            const data = await api('GET', '/api/packages');
+            if (!data) return;
+            packagesData = data;
+            const container = document.getElementById('packagesListContainer');
+            
+            container.innerHTML = data.map((pkg, idx) => {
+                const isFeatured = idx === 1 || pkg.months >= 6;
+                const priceFormatted = Number(pkg.price || pkg.unitPrice || 0).toLocaleString('vi-VN');
+                return `
+                    <div class="package-card ${isFeatured ? 'featured' : ''}">
+                        ${isFeatured ? '<span class="featured-tag">Phổ biến</span>' : ''}
+                        <div>
+                            <div class="pkg-title">${pkg.packageName}</div>
+                            <div class="pkg-type">${pkg.packageType || 'Gói tiêu chuẩn'} · ${pkg.months || pkg.durationInMonths} THÁNG</div>
+                            <div class="pkg-price">${priceFormatted} <span>VND</span></div>
+                            <div class="pkg-desc">${pkg.description || 'Truy cập không giới hạn khu tập Gym, Cardio, phòng tắm nước nóng và Locker cá nhân.'}</div>
+                        </div>
+                        <button class="btn primary" onclick="promptRegisterPackage(${pkg.packageId}, '${pkg.packageName}', ${pkg.price || pkg.unitPrice})">
+                            Đăng ký gói này
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadClasses() {
+            const data = await api('GET', '/api/classes');
+            if (!data) return;
+            classesData = data;
+            const container = document.getElementById('classesListContainer');
+
+            container.innerHTML = data.map(c => `
+                <div class="class-card">
+                    <div class="class-header">
+                        <div class="class-name">${c.className}</div>
+                        <span class="class-capacity">Sức chứa: ${c.capacity}</span>
+                    </div>
+                    <div class="class-detail">
+                        <span>👤 Huấn luyện viên:</span>
+                        <strong style="color: #fff;">${c.trainerName || 'Đang sắp xếp'}</strong>
+                    </div>
+                    <div class="class-detail">
+                        <span>🏢 Chi nhánh:</span>
+                        <span>Chi nhánh #${c.branchId || 1}</span>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <button class="btn secondary" style="width: 100%;" onclick="enrollClass(${c.classId}, '${c.className}')">
+                            ✓ Đăng ký tham gia lớp
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadTrainers() {
+            const data = await api('GET', '/api/trainers');
+            if (!data) return;
+            const container = document.getElementById('trainersListContainer');
+
+            container.innerHTML = data.map(t => `
+                <div class="trainer-card">
+                    <div class="trainer-avatar">🏋️</div>
+                    <div class="trainer-info">
+                        <h4>${t.fullName}</h4>
+                        <p>Chuyên môn: <strong style="color: var(--volt);">${t.specialty || 'Fitness & Bodybuilding'}</strong></p>
+                        <p>SĐT: ${t.phone || t.phoneNumber || '090-xxx-xxxx'}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function promptRegisterPackage(pkgId, pkgName, price) {
+            if (!activeMember) {
+                toast('Vui lòng chọn hoặc đăng nhập tài khoản hội viên trước!', false);
+                return;
+            }
+            document.getElementById('modalPkgId').value = pkgId;
+            document.getElementById('modalPkgSummary').textContent = `${pkgName} - ${Number(price).toLocaleString('vi-VN')} VND`;
+            document.getElementById('modalMemberName').value = `${activeMember.fullName} (#${activeMember.memberId})`;
+            
+            const now = new Date();
+            now.setSeconds(0, 0);
+            const localStart = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('modalStartDate').value = localStart;
+
+            openModal('modalRegPackage');
+        }
+
+        async function submitRegisterPackage() {
+            if (!activeMember) return;
+            const pkgId = Number(document.getElementById('modalPkgId').value);
+            const startDate = document.getElementById('modalStartDate').value;
+            const promoCode = document.getElementById('modalPromoCode').value.trim() || null;
+            const paymentMethod = document.getElementById('modalPaymentMethod').value;
+
+            if (!startDate) {
+                toast('Vui lòng chọn ngày bắt đầu!', false);
+                return;
+            }
+
+            const body = {
+                memberId: activeMember.memberId,
+                packageId: pkgId,
+                branchId: activeMember.branchId || 1,
+                startDate: startDate,
+                accountId: null,
+                promoCode: promoCode,
+                paymentMethod: paymentMethod
+            };
+
+            const res = await api('POST', '/api/package-registrations', body);
+            if (res) {
+                toast('Đăng ký gói tập thành công!');
+                closeModal('modalRegPackage');
+                await refreshMyPortal();
+            }
+        }
+
+        async function refreshMyPortal() {
+            const portal = await api('GET', '/api/member-portal/me');
+            if (!portal || !portal.member) return;
+            activeMember = portal.member;
+            memberPackages = portal.packages || [];
+            selectMember(activeMember);
+        }
+
+        async function enrollClass(classId, className) {
+            if (!activeMember) {
+                toast('Vui lòng chọn hội viên trước!', false);
+                return;
+            }
+            const res = await api('POST', '/api/classes/enroll', {
+                memberId: activeMember.memberId,
+                classId: classId
+            });
+            if (res) {
+                toast(`Đã đăng ký lớp "${className}" thành công!`);
+            }
+        }
+
+        async function quickCheckIn() {
+            if (!activeMember) {
+                toast('Chưa chọn hội viên!', false);
+                return;
+            }
+            const res = await api('POST', '/api/attendance/checkin', {
+                memberId: activeMember.memberId
+            });
+            if (res) {
+                toast('⚡ Điểm danh Check-in thành công!');
+                const now = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('sumCheckIn').textContent = 'Đã vào lúc ' + now;
+                document.getElementById('sumCheckIn').style.color = 'var(--volt)';
+            }
+        }
+
+        async function requestPausePackage() {
+            const reason = document.getElementById('pauseReasonInput').value.trim();
+            if (!reason) {
+                toast('Vui lòng nhập lý do tạm ngưng gói!', false);
+                return;
+            }
+            // Check registrations
+            toast('Đã ghi nhận yêu cầu tạm ngưng gói tập: ' + reason);
+            document.getElementById('pauseReasonInput').value = '';
+        }
+
+        async function updateProfile(e) {
+            e.preventDefault();
+            if (!activeMember) return;
+
+            const body = {
+                branchId: activeMember.branchId || 1,
+                fullName: document.getElementById('profFullName').value.trim(),
+                gender: document.getElementById('profGender').value,
+                dateOfBirth: document.getElementById('profDob').value || null,
+                phone: document.getElementById('profPhone').value.trim(),
+                email: document.getElementById('profEmail').value.trim(),
+                address: document.getElementById('profAddress').value.trim()
+            };
+
+            const res = await api('PUT', '/api/member-portal/me', body);
+            if (res) {
+                toast('Cập nhật thông tin thành công!');
+                activeMember.fullName = body.fullName;
+                activeMember.phone = body.phone;
+                activeMember.email = body.email;
+                activeMember.address = body.address;
+                activeMember.gender = body.gender;
+                activeMember.dateOfBirth = body.dateOfBirth;
+                selectMember(activeMember);
+            }
+        }
+
+        function renderMyPackageInfo() {
+            const container = document.getElementById('myCurrentPackageDetails');
+            if (!activeMember) return;
+            if (!memberPackages.length) {
+                container.innerHTML = `
+                    <p style="color: #fff; font-weight: 700;">${activeMember.fullName} (#${activeMember.memberId})</p>
+                    <p style="color: var(--steel); margin-top: 8px;">Bạn chưa có gói tập nào được đăng ký.</p>`;
+                return;
+            }
+
+            container.innerHTML = memberPackages.map(item => `
+                <article style="padding: 14px 0; border-bottom: 1px solid var(--line);">
+                    <div style="display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px;">
+                        <strong style="font-size: 16px; color: #fff;">${item.packageName}</strong>
+                        <span style="color: var(--volt); font-size: 12px; font-weight: 700;">${item.status || 'Đã đăng ký'}</span>
+                    </div>
+                    <div style="color: var(--steel); font-size: 13px; line-height: 1.8;">
+                        <p>Mã đăng ký: <strong>#${item.registrationId}</strong> · ${item.months} tháng</p>
+                        <p>Bắt đầu: <strong>${formatDateTime(item.startDate)}</strong></p>
+                        <p>Hết hạn: <strong>${formatDateTime(item.endDate)}</strong></p>
+                        <p>Giá gói: <strong>${Number(item.listPrice || 0).toLocaleString('vi-VN')} VND</strong>
+                           · Giảm: <strong>${Number(item.discountAmount || 0).toLocaleString('vi-VN')} VND</strong>
+                           · Thanh toán: <strong style="color: var(--volt);">${Number(item.paidPrice || 0).toLocaleString('vi-VN')} VND</strong></p>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('currentUser');
+            toast('Đã đăng xuất');
+            showMemberLogin(false);
+        }
+
+        // Run on load
+        window.addEventListener('DOMContentLoaded', initPortal);
+    </script>
+</body>
+</html>

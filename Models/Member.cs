@@ -11,6 +11,10 @@ namespace GymManagement.Api.Models
         [Column("BranchId")]
         public int? BranchId { get; set; }
 
+        // Explicitly links a member profile to the account that owns it.
+        [Column("AccountId")]
+        public int? AccountId { get; set; }
+
         [Column("FullName")]
         public string FullName { get; set; } = string.Empty;
 

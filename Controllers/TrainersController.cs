@@ -1,5 +1,6 @@
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymManagement.Api.Controllers
@@ -16,6 +17,7 @@ namespace GymManagement.Api.Controllers
         public IActionResult List() => Ok(_service.List().ToJsonList());
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public IActionResult Add([FromBody] TrainerRequest req)
         {
             var (success, message, trainerId) = _service.Add(req);

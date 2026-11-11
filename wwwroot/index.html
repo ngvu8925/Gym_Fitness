@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Gym Fitness Management</title>
+    <title>Gym Fitness - Admin Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -353,6 +353,9 @@
                 display: block;
             }
 
+        body.signed-out .sidenav button:not([data-tab="tabAuth"]) { display: none; }
+        body.signed-out main > .tab:not(#tabAuth) { display: none !important; }
+
         @media (max-width: 800px) {
             body {
                 flex-direction: column;
@@ -374,8 +377,16 @@
 
     <aside>
         <div class="brand">
-            <div class="display">Gym<em>Ledger</em></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                <div class="display">Gym<em>Ledger</em></div>
+                <span style="background: rgba(217, 255, 61, 0.2); color: var(--volt); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--volt);">ADMIN</span>
+            </div>
             <p>Gym management dashboard</p>
+        </div>
+        <div style="padding: 0 12px 10px;">
+            <a href="user.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; background: rgba(217, 255, 61, 0.12); color: var(--volt); border: 1px solid var(--volt); border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600;">
+                🏋️‍♂️ Cổng Hội Viên (User)
+            </a>
         </div>
         <nav class="sidenav" id="tabNav">
             <button data-tab="tabOverview" class="active">Overview</button>
@@ -390,6 +401,7 @@
             <label>API address</label>
             <input id="baseUrlInput" value="http://localhost:5268">
             <span id="loginStatus">Not signed in</span>
+            <button class="btn ghost" onclick="logout()" style="margin-top: 8px; width: 100%;">Log out</button>
         </div>
     </aside>
 
@@ -445,7 +457,8 @@
                     <input id="memberAddress" placeholder="Address">
                     <input id="memberDob" type="date">
                     <input id="memberBranchId" type="number" placeholder="Branch ID" value="1" style="width:110px">
-                    <button class="btn primary" onclick="addMember()">Save member</button>
+                    <button id="memberSaveButton" class="btn primary" onclick="addMember()">Save member</button>
+                    <button id="memberCancelButton" class="btn ghost" onclick="cancelMemberEdit()" style="display:none">Cancel edit</button>
                 </form>
             </div>
             <div class="panel">
@@ -455,6 +468,15 @@
                     <button class="btn ghost" onclick="loadMembers()">Search / reload</button>
                 </form>
                 <div id="memberTable"></div>
+            </div>
+            <div class="panel">
+                <h2>Link member login</h2>
+                <p class="sub">Connect one member profile to its own Member account so the user portal shows only that person's information.</p>
+                <form class="row" onsubmit="return false;">
+                    <select id="linkMemberId"></select>
+                    <select id="linkAccountId" onchange="syncLinkedMemberSelection()"></select>
+                    <button class="btn primary" onclick="saveMemberAccountLink()">Save account link</button>
+                </form>
             </div>
         </section>
 
@@ -489,7 +511,6 @@
                     <input id="regPackageId" type="number" placeholder="Package ID" style="width:100px">
                     <input id="regBranchId" type="number" placeholder="Branch ID" value="1" style="width:120px">
                     <input id="regStartDate" type="date">
-                    <input id="regAccountId" type="number" placeholder="Account ID" value="1" style="width:130px">
                     <input id="regPromoCode" placeholder="Promo code (optional)">
                     <button class="btn primary" onclick="registerPackage()">Register</button>
                 </form>
@@ -577,6 +598,10 @@
     <div id="msgBox"></div>
 
     <script>
+let adminMembers = [];
+let memberAccounts = [];
+let editingMemberId = null;
+
 function baseUrl() { return document.getElementById('baseUrlInput').value.replace(/\/$/, ''); }
 
 function toast(msg, ok = true) {
@@ -590,9 +615,12 @@ function toast(msg, ok = true) {
 
 async function api(method, path, body) {
           try {
+            const token = localStorage.getItem('token');
+            const headers = body ? { 'Content-Type': 'application/json' } : {};
+            if (token) headers['Authorization'] = 'Bearer ' + token;
             const res = await fetch(baseUrl() + path, {
               method,
-              headers: body ? { 'Content-Type': 'application/json' } : {},
+              headers,
               body: body ? JSON.stringify(body) : undefined
             });
             const data = await res.json().catch(() => ({}));
@@ -651,15 +679,52 @@ async function loadOverview() {
             stats[3].textContent = '0 VND';
           }
 }
-window.addEventListener('DOMContentLoaded', loadOverview);
+function showLoginOnly() {
+          document.body.classList.add('signed-out');
+          document.querySelectorAll('nav.sidenav button').forEach(button => button.classList.remove('active'));
+          document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+          document.querySelector('[data-tab="tabAuth"]').classList.add('active');
+          document.getElementById('tabAuth').classList.add('active');
+          document.getElementById('loginStatus').textContent = 'Not signed in';
+}
+
+async function initializeAdmin() {
+          let session = null;
+          try { session = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch { }
+          if (!localStorage.getItem('token') || !session) { showLoginOnly(); return; }
+
+          const role = String(session.role || '').toLowerCase();
+          if (role === 'member') { window.location.replace('user.html'); return; }
+          if (role !== 'admin') { logout(); return; }
+
+          document.body.classList.remove('signed-out');
+          document.getElementById('loginStatus').textContent = session.fullName + ' · Admin';
+          await loadOverview();
+          await Promise.all([loadMembers(), loadPackages(), loadTrainers(), loadClasses(), loadMemberAccounts()]);
+          document.querySelector('[data-tab="tabOverview"]').click();
+}
+
+function logout() {
+          localStorage.removeItem('token');
+          localStorage.removeItem('currentUser');
+          showLoginOnly();
+}
+
+window.addEventListener('DOMContentLoaded', initializeAdmin);
 
 async function login() {
           const username = document.getElementById('loginUser').value;
           const password = document.getElementById('loginPass').value;
           const data = await api('POST', '/api/auth/login', { username, password });
           if (data) {
+            if (data.token) localStorage.setItem('token', data.token);
+            localStorage.setItem('currentUser', JSON.stringify({ accountId: data.accountId, fullName: data.fullName, role: data.role }));
             document.getElementById('loginStatus').textContent = data.fullName + ' · ' + data.role;
-            toast('Login successful');
+            const role = String(data.role || '').toLowerCase();
+            if (role === 'member') { window.location.href = 'user.html'; return; }
+            if (role !== 'admin') { logout(); toast('Tài khoản này không có quyền vào trang admin.', false); return; }
+            toast('Đăng nhập thành công (' + data.role + ')');
+            await initializeAdmin();
           }
 }
 
@@ -673,29 +738,139 @@ async function addMember() {
             email: document.getElementById('memberEmail').value.trim(),
             address: document.getElementById('memberAddress').value.trim()
           };
-          const data = await api('POST', '/api/members', body);
+          const isEditing = editingMemberId !== null;
+          const data = await api(isEditing ? 'PUT' : 'POST', isEditing ? '/api/members/' + editingMemberId : '/api/members', body);
           if (data) {
-            toast('Member saved (ID ' + data.memberId + ')');
-            document.getElementById('memberFullName').value = '';
-            document.getElementById('memberPhone').value = '';
-            document.getElementById('memberEmail').value = '';
-            document.getElementById('memberAddress').value = '';
-            document.getElementById('memberDob').value = '';
+            toast(isEditing ? 'Member profile updated.' : 'Member saved (ID ' + data.memberId + ')');
+            cancelMemberEdit();
             loadMembers();
             loadOverview();
           }
 }
 
+function cancelMemberEdit() {
+          editingMemberId = null;
+          document.getElementById('memberFullName').value = '';
+          document.getElementById('memberPhone').value = '';
+          document.getElementById('memberEmail').value = '';
+          document.getElementById('memberAddress').value = '';
+          document.getElementById('memberDob').value = '';
+          document.getElementById('memberGender').value = 'Nam';
+          document.getElementById('memberBranchId').value = '1';
+          document.getElementById('memberSaveButton').textContent = 'Save member';
+          document.getElementById('memberCancelButton').style.display = 'none';
+}
+
+function editMember(memberId) {
+          const member = adminMembers.find(row => Number(row.memberId) === Number(memberId));
+          if (!member) return;
+          editingMemberId = member.memberId;
+          document.getElementById('memberFullName').value = member.fullName || '';
+          document.getElementById('memberGender').value = member.gender || 'Nam';
+          document.getElementById('memberPhone').value = member.phone || member.phoneNumber || '';
+          document.getElementById('memberEmail').value = member.email || '';
+          document.getElementById('memberAddress').value = member.address || '';
+          document.getElementById('memberDob').value = member.dateOfBirth ? member.dateOfBirth.substring(0, 10) : '';
+          document.getElementById('memberBranchId').value = member.branchId || 1;
+          document.getElementById('memberSaveButton').textContent = 'Update member';
+          document.getElementById('memberCancelButton').style.display = '';
+          document.getElementById('memberFullName').focus();
+}
+
+async function deactivateMember(memberId) {
+          const member = adminMembers.find(row => Number(row.memberId) === Number(memberId));
+          if (!member || !confirm('Deactivate ' + member.fullName + '?')) return;
+          const result = await api('DELETE', '/api/members/' + memberId);
+          if (result) { toast(result.message); await loadMembers(); await loadOverview(); }
+}
+
 async function loadMembers() {
           const keyword = document.getElementById('memberKeyword').value;
           const data = await api('GET', '/api/members?keyword=' + encodeURIComponent(keyword));
-          if (data) renderTable('memberTable', data, [
-            { key: 'memberId', label: 'ID' }, { key: 'fullName', label: 'Full name' },
-            { key: 'gender', label: 'Gender' }, { key: 'phone', label: 'Phone' },
-            { key: 'email', label: 'Email' }, { key: 'address', label: 'Address' }
-          ], 'No matching members. Add a new member using the form above.');
+          if (data) {
+            adminMembers = data;
+            renderMembersTable(data);
+            populateMemberLinkOptions();
+          }
 }
-loadMembers();
+
+function renderMembersTable(rows) {
+          const container = document.getElementById('memberTable');
+          container.innerHTML = '';
+          if (!rows.length) {
+            container.textContent = 'No matching members. Add a new member using the form above.';
+            return;
+          }
+          const table = document.createElement('table');
+          const header = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          for (const label of ['ID', 'Full name', 'Gender', 'Phone', 'Email', 'Address', 'Actions']) {
+            const th = document.createElement('th'); th.textContent = label; headerRow.appendChild(th);
+          }
+          header.appendChild(headerRow); table.appendChild(header);
+          const body = document.createElement('tbody');
+          for (const member of rows) {
+            const row = document.createElement('tr');
+            for (const value of [member.memberId, member.fullName, member.gender, member.phone || member.phoneNumber, member.email, member.address]) {
+              const cell = document.createElement('td'); cell.textContent = value ?? ''; row.appendChild(cell);
+            }
+            const actions = document.createElement('td');
+            const edit = document.createElement('button'); edit.className = 'btn ghost'; edit.textContent = 'Edit';
+            edit.onclick = () => editMember(member.memberId);
+            const deactivate = document.createElement('button'); deactivate.className = 'btn ghost'; deactivate.textContent = 'Deactivate';
+            deactivate.style.marginLeft = '6px'; deactivate.onclick = () => deactivateMember(member.memberId);
+            actions.append(edit, deactivate); row.appendChild(actions); body.appendChild(row);
+          }
+          table.appendChild(body); container.appendChild(table);
+}
+
+function populateMemberLinkOptions() {
+          const select = document.getElementById('linkMemberId');
+          if (!select) return;
+          select.innerHTML = '';
+          for (const member of adminMembers) {
+            const option = document.createElement('option');
+            option.value = member.memberId;
+            option.textContent = `${member.fullName} (#${member.memberId})`;
+            select.appendChild(option);
+          }
+}
+
+async function loadMemberAccounts() {
+          const data = await api('GET', '/api/accounts/member-options');
+          if (!data) return;
+          memberAccounts = data;
+          const select = document.getElementById('linkAccountId');
+          select.innerHTML = '';
+          const emptyOption = document.createElement('option');
+          emptyOption.value = '';
+          emptyOption.textContent = 'Choose member login account';
+          select.appendChild(emptyOption);
+          for (const account of memberAccounts) {
+            const option = document.createElement('option');
+            option.value = account.accountId;
+            const linkedTo = account.memberId ? ` · Linked to member #${account.memberId}` : '';
+            option.textContent = `${account.fullName} (${account.username}, #${account.accountId})${linkedTo}`;
+            select.appendChild(option);
+          }
+          populateMemberLinkOptions();
+}
+
+function syncLinkedMemberSelection() {
+          const account = memberAccounts.find(item => String(item.accountId) === document.getElementById('linkAccountId').value);
+          if (account?.memberId) document.getElementById('linkMemberId').value = account.memberId;
+}
+
+async function saveMemberAccountLink() {
+          const memberId = Number(document.getElementById('linkMemberId').value);
+          if (!memberId) { toast('Add or select a member first.', false); return; }
+          const rawAccountId = document.getElementById('linkAccountId').value;
+          const result = await api('PUT', `/api/members/${memberId}/account`, { accountId: rawAccountId ? Number(rawAccountId) : null });
+          if (result) {
+            toast(result.message);
+            await loadMemberAccounts();
+          }
+}
 
 async function addPackage() {
           const body = {
@@ -717,7 +892,6 @@ async function loadPackages() {
             { key: 'price', label: 'Price' }
           ], 'No packages yet. Add a package using the form above.');
 }
-loadPackages();
 
 async function registerPackage() {
           const body = {
@@ -725,7 +899,6 @@ async function registerPackage() {
             packageId: Number(document.getElementById('regPackageId').value),
             branchId: Number(document.getElementById('regBranchId').value),
             startDate: document.getElementById('regStartDate').value,
-            accountId: Number(document.getElementById('regAccountId').value),
             promoCode: document.getElementById('regPromoCode').value || null,
             paymentMethod: 'Cash'
           };
@@ -752,7 +925,6 @@ async function loadTrainers() {
             { key: 'specialty', label: 'Specialty' }, { key: 'phone', label: 'Phone' }
           ], 'No trainers yet. Add one using the form above.');
 }
-loadTrainers();
 
 async function addClass() {
           const body = {
@@ -772,7 +944,6 @@ async function loadClasses() {
             { key: 'trainerName', label: 'Trainer' }, { key: 'capacity', label: 'Capacity' }
           ], 'No classes yet. Add one using the form above.');
 }
-loadClasses();
 
 async function checkIn() {
           const memberId = Number(document.getElementById('attMemberId').value);

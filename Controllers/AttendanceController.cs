@@ -1,5 +1,7 @@
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymManagement.Api.Controllers
@@ -9,18 +11,40 @@ namespace GymManagement.Api.Controllers
     public class AttendanceController : ControllerBase
     {
         private readonly AttendanceService _service;
+        private readonly MemberAccountService _memberAccounts;
 
-        public AttendanceController(AttendanceService service) => _service = service;
+        public AttendanceController(AttendanceService service, MemberAccountService memberAccounts)
+        {
+            _service = service;
+            _memberAccounts = memberAccounts;
+        }
 
         [HttpPost("checkin")]
-        public IActionResult CheckIn([FromBody] CheckInRequest req)
+        [Authorize]
+        public async Task<IActionResult> CheckIn([FromBody] CheckInRequest req)
         {
+            if (User.IsInRole("Member"))
+            {
+                var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? User.FindFirstValue("AccountId");
+                if (!int.TryParse(value, out var accountId)) return Unauthorized();
+                var member = await _memberAccounts.GetMemberForAccountAsync(accountId);
+                if (member == null)
+                    return Conflict(new { message = "This account is not linked to a member profile." });
+                req.MemberId = member.MemberId;
+            }
+            else if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
             var (success, message) = _service.CheckIn(req.MemberId);
             if (!success) return BadRequest(new { message });
             return Ok(new { message });
         }
 
         [HttpPost("checkout/{attendanceId}")]
+        [Authorize(Roles = "Admin")]
         public IActionResult CheckOut(int attendanceId)
         {
             _service.CheckOut(attendanceId);

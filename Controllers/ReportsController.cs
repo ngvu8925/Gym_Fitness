@@ -1,10 +1,12 @@
 using GymManagement.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymManagement.Api.Controllers
 {
     [ApiController]
     [Route("api/reports")]
+    [Authorize(Roles = "Admin")]
     public class ReportsController : ControllerBase
     {
         private readonly ReportService _service;

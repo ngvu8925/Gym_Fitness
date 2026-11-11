@@ -21,43 +21,33 @@ namespace GymManagement.Api.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Member>(entity =>
-            {
-                entity.HasKey(e => e.MemberId);
-            });
+            // The existing database uses the English table and column names declared
+            // on the model classes. Keep the account-to-member link explicit here.
+            modelBuilder.Entity<Member>().HasKey(member => member.MemberId);
+            modelBuilder.Entity<MembershipPackage>().HasKey(package => package.PackageId);
+            modelBuilder.Entity<GymClass>().HasKey(gymClass => gymClass.ClassId);
+            modelBuilder.Entity<Trainer>().HasKey(trainer => trainer.TrainerId);
+            modelBuilder.Entity<Attendance>().HasKey(attendance => attendance.AttendanceId);
+            modelBuilder.Entity<Account>().HasKey(account => account.AccountId);
+            modelBuilder.Entity<PackageRegistration>().HasKey(registration => registration.RegistrationId);
 
-            modelBuilder.Entity<MembershipPackage>(entity =>
-            {
-                entity.HasKey(e => e.PackageId);
-                entity.Property(e => e.Price).HasPrecision(18, 2);
-            });
+            modelBuilder.Entity<Member>()
+                .HasOne<Account>()
+                .WithOne()
+                .HasForeignKey<Member>(member => member.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<GymClass>(entity =>
-            {
-                entity.HasKey(e => e.ClassId);
-            });
+            modelBuilder.Entity<Account>()
+                .HasIndex(account => account.Username)
+                .IsUnique();
 
-            modelBuilder.Entity<Trainer>(entity =>
-            {
-                entity.HasKey(e => e.TrainerId);
-            });
+            modelBuilder.Entity<MembershipPackage>()
+                .Property(package => package.Price)
+                .HasPrecision(18, 0);
 
-            modelBuilder.Entity<Attendance>(entity =>
-            {
-                entity.HasKey(e => e.AttendanceId);
-            });
-
-            modelBuilder.Entity<Account>(entity =>
-            {
-                entity.HasKey(e => e.AccountId);
-                entity.HasIndex(e => e.Username).IsUnique();
-            });
-
-            modelBuilder.Entity<PackageRegistration>(entity =>
-            {
-                entity.HasKey(e => e.RegistrationId);
-                entity.Property(e => e.DiscountAmount).HasPrecision(18, 2);
-            });
+            modelBuilder.Entity<PackageRegistration>()
+                .Property(registration => registration.DiscountAmount)
+                .HasPrecision(18, 0);
         }
     }
 }
