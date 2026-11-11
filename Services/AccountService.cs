@@ -15,13 +15,40 @@ namespace GymManagement.Api.Services
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return (false, "Please enter both username and password", null);
 
-            string hash = PasswordHelper.Hash(password);
-            DataTable dt = _repo.Login(username, hash);
+            DataTable dt = _repo.GetByUsername(username);
 
             if (dt.Rows.Count == 0)
                 return (false, "Invalid username or password", null);
 
-            return (true, "Login successful", dt.Rows[0]);
+            var row = dt.Rows[0];
+            string storedHash = row["Password"]?.ToString() ?? string.Empty;
+
+            if (!IsPasswordValid(password, storedHash, out var upgradeHash))
+                return (false, "Invalid username or password", null);
+
+            // Tài khoản legacy (SHA-256 cũ) đăng nhập đúng -> nâng cấp lên BCrypt ngay.
+            if (upgradeHash != null)
+            {
+                _repo.UpdatePasswordHash(Convert.ToInt32(row["AccountId"]), upgradeHash);
+            }
+
+            return (true, "Login successful", row);
+        }
+
+        private bool IsPasswordValid(string password, string storedHash, out string? upgradeHash)
+        {
+            upgradeHash = null;
+
+            if (PasswordHelper.IsLegacyHash(storedHash))
+            {
+                if (!PasswordHelper.VerifyLegacy(password, storedHash))
+                    return false;
+
+                upgradeHash = PasswordHelper.Hash(password);
+                return true;
+            }
+
+            return PasswordHelper.Verify(password, storedHash);
         }
 
         public (bool Success, string Message, int AccountId) Register(

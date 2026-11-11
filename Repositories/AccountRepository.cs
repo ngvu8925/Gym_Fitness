@@ -10,14 +10,34 @@ namespace GymManagement.Api.Repositories
         public AccountRepository(DatabaseHelper db) => _db = db;
         public AccountRepository() : this(new DatabaseHelper()) { }
 
-        public DataTable Login(string username, string passwordHash)
+        /// <summary>
+        /// Lấy account theo username (kèm hash mật khẩu) để service tự verify.
+        /// BCrypt không so sánh được trong SQL nên không dùng sp_Account_Login nữa.
+        /// </summary>
+        public DataTable GetByUsername(string username)
         {
-            var ps = new SqlParameter[]
-            {
-                new("@Username", username),
-                new("@PasswordHash", passwordHash)
-            };
-            return _db.ExecuteQuery("sp_Account_Login", ps);
+            const string sql = @"
+                SELECT AccountId, Username, Password, FullName, Role, BranchId, Status
+                FROM Accounts
+                WHERE Username = @Username;";
+
+            return _db.ExecuteQuery(sql,
+                new SqlParameter[] { new SqlParameter("@Username", username) },
+                isStoredProcedure: false);
+        }
+
+        /// <summary>
+        /// Cập nhật lại hash mật khẩu (dùng khi nâng cấp tài khoản legacy sang BCrypt).
+        /// </summary>
+        public void UpdatePasswordHash(int accountId, string passwordHash)
+        {
+            const string sql = @"
+                UPDATE Accounts SET Password = @Password
+                WHERE AccountId = @AccountId;";
+
+            _db.ExecuteNonQuery(sql,
+                new SqlParameter("@AccountId", accountId),
+                new SqlParameter("@Password", passwordHash));
         }
 
         public bool UsernameExists(string username)
