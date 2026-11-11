@@ -542,6 +542,9 @@
                     <input id="classTrainerId" type="number" placeholder="Trainer ID" style="width:100px">
                     <input id="classCapacity" type="number" placeholder="Capacity" value="20" style="width:100px">
                     <input id="classBranchId" type="number" placeholder="Branch ID" value="1" style="width:120px">
+                    <input id="classDays" placeholder="Lịch: 2,4,6 (thứ)" style="width:140px" title="Các thứ trong tuần, phân tách bằng dấu phẩy. VD: 2,4,6 = thứ 2, 4, 6. 1 hoặc 8 = Chủ nhật">
+                    <input id="classStartTime" type="time" style="width:120px" title="Giờ bắt đầu">
+                    <input id="classEndTime" type="time" style="width:120px" title="Giờ kết thúc">
                     <button class="btn primary" onclick="addClass()">Save class</button>
                 </form>
                 <button class="btn ghost" onclick="loadClasses()" style="margin-top:8px">Load classes</button>
@@ -694,8 +697,7 @@ async function initializeAdmin() {
           if (!localStorage.getItem('token') || !session) { showLoginOnly(); return; }
 
           const role = String(session.role || '').toLowerCase();
-          if (role === 'member') { window.location.replace('user.html'); return; }
-          if (role !== 'admin') { logout(); return; }
+          if (role !== 'admin') { logout(); toast('Trang này chỉ dành cho tài khoản Admin. Hội viên vui lòng dùng user.html.', false); return; }
 
           document.body.classList.remove('signed-out');
           document.getElementById('loginStatus').textContent = session.fullName + ' · Admin';
@@ -717,12 +719,15 @@ async function login() {
           const password = document.getElementById('loginPass').value;
           const data = await api('POST', '/api/auth/login', { username, password });
           if (data) {
-            if (data.token) localStorage.setItem('token', data.token);
+            const role = String(data.role || '').toLowerCase();
+            if (role !== 'admin') {
+              // Trang admin chỉ nhận tài khoản Admin — hội viên hãy dùng user.html
+              toast('Đây là tài khoản ' + (data.role || 'không phải Admin') + '. Vui lòng đăng nhập tại user.html.', false);
+              return;
+            }
+            localStorage.setItem('token', data.token);
             localStorage.setItem('currentUser', JSON.stringify({ accountId: data.accountId, fullName: data.fullName, role: data.role }));
             document.getElementById('loginStatus').textContent = data.fullName + ' · ' + data.role;
-            const role = String(data.role || '').toLowerCase();
-            if (role === 'member') { window.location.href = 'user.html'; return; }
-            if (role !== 'admin') { logout(); toast('Tài khoản này không có quyền vào trang admin.', false); return; }
             toast('Đăng nhập thành công (' + data.role + ')');
             await initializeAdmin();
           }
@@ -927,21 +932,42 @@ async function loadTrainers() {
 }
 
 async function addClass() {
+          const days = document.getElementById('classDays').value.trim() || null;
+          const startTime = document.getElementById('classStartTime').value || null;
+          const endTime = document.getElementById('classEndTime').value || null;
+          if (days && startTime && endTime && startTime >= endTime) {
+            toast('Giờ kết thúc phải sau giờ bắt đầu!', false);
+            return;
+          }
           const body = {
             branchId: Number(document.getElementById('classBranchId').value) || null,
             name: document.getElementById('className').value,
             trainerId: Number(document.getElementById('classTrainerId').value) || null,
-            capacity: Number(document.getElementById('classCapacity').value) || 20
+            capacity: Number(document.getElementById('classCapacity').value) || 20,
+            daysOfWeek: days,
+            startTime: startTime ? startTime + ':00' : null,
+            endTime: endTime ? endTime + ':00' : null
           };
           const data = await api('POST', '/api/classes', body);
           if (data) { toast('Class saved'); loadClasses(); loadOverview(); }
 }
 
+function formatSchedule(c) {
+          if (!c.daysOfWeek && !c.startTime) return '--';
+          const days = c.daysOfWeek ? String(c.daysOfWeek).split(',').map(d => {
+            const num = parseInt(d.trim(), 10);
+            return Number.isNaN(num) ? d.trim() : (num === 1 || num === 8 ? 'CN' : 'T' + num);
+          }).join('·') : 'Linh hoạt';
+          const time = c.startTime ? String(c.startTime).split(':').slice(0, 2).join(':') + '-' + String(c.endTime || '').split(':').slice(0, 2).join(':') : '';
+          return time ? days + ' ' + time : days;
+}
+
 async function loadClasses() {
           const data = await api('GET', '/api/classes');
-          if (data) renderTable('classTable', data, [
+          if (data) renderTable('classTable', data.map(c => ({ ...c, schedule: formatSchedule(c) })), [
             { key: 'classId', label: 'ID' }, { key: 'className', label: 'Class' },
-            { key: 'trainerName', label: 'Trainer' }, { key: 'capacity', label: 'Capacity' }
+            { key: 'trainerName', label: 'Trainer' }, { key: 'capacity', label: 'Capacity' },
+            { key: 'schedule', label: 'Schedule' }
           ], 'No classes yet. Add one using the form above.');
 }
 

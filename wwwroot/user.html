@@ -303,6 +303,9 @@
             .stats-row {
                 grid-template-columns: 1fr;
             }
+            #dashTwoCols {
+                grid-template-columns: 1fr !important;
+            }
         }
 
         .stat-item {
@@ -730,8 +733,8 @@
             <span class="badge-user">USER PORTAL</span>
         </div>
         <div class="topbar-actions">
-            <a href="admin.html" class="btn-switch">
-                ⚙️ Đến Admin Dashboard
+            <a href="admin.html" class="btn-switch" title="Chỉ dành cho tài khoản Admin">
+                ⚙️ Trang Quản trị (Admin)
             </a>
             <div class="user-chip" id="topUserChip" style="display: none;">
                 <div class="user-avatar" id="avatarInitial">U</div>
@@ -751,7 +754,7 @@
         </div>
 
         <div id="adminNoticeBanner" style="display: none; background: rgba(255, 90, 54, 0.15); border: 1px solid var(--coral); color: #ff8566; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 18px; line-height: 1.5;">
-            ⚠️ Bạn vừa từ trang <strong>Admin</strong> sang. Vui lòng đăng nhập bằng tài khoản <strong>Hội viên</strong> dưới đây (bấm nút 1-Click để thử nhanh) hoặc quay lại trang Admin.
+            ⚠️ Trang này chỉ dành cho tài khoản <strong>Hội viên</strong>. Nếu bạn là <strong>Admin</strong>, vui lòng đăng nhập tại <a href="admin.html" style="color: var(--volt);">admin.html</a>.
         </div>
 
         <div class="field" style="margin-bottom: 14px;">
@@ -840,14 +843,64 @@
 
         <!-- Navigation Tabs for User -->
         <nav class="portal-nav" id="portalNav">
-            <button class="active" onclick="switchTab('tabPackages')">🏷️ Gói tập & Ưu đãi</button>
+            <button class="active" onclick="switchTab('tabDashboard')">🏠 Tổng quan</button>
+            <button onclick="switchTab('tabPackages')">🏷️ Gói tập & Ưu đãi</button>
             <button onclick="switchTab('tabClasses')">📅 Lớp học & Huấn luyện viên</button>
             <button onclick="switchTab('tabMyPackages')">📋 Gói tập của tôi</button>
             <button onclick="switchTab('tabProfile')">👤 Hồ sơ cá nhân</button>
         </nav>
 
+        <!-- TAB 0: DASHBOARD TỔNG QUAN -->
+        <section id="tabDashboard" class="tab-panel active">
+            <div style="margin-bottom: 20px;">
+                <h2>Tổng quan tập luyện</h2>
+                <p style="color: var(--steel); font-size: 14px;">Mọi thứ bạn cần: gói còn bao lâu, tập với ai, giờ nào.</p>
+            </div>
+
+            <div class="stats-row" style="margin-bottom: 24px;" id="dashStatsRow">
+                <div class="stat-item">
+                    <div class="label">Gói tập còn lại</div>
+                    <div class="value accent" id="dashDaysLeft" style="font-size: 26px;">--</div>
+                    <div style="color: var(--steel); font-size: 11px;" id="dashDaysLeftNote">ngày</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Lớp đã đăng kí</div>
+                    <div class="value" id="dashClassCount" style="font-size: 26px;">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Lượt tập (gần đây)</div>
+                    <div class="value" id="dashVisitCount" style="font-size: 26px;">0</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" id="dashTwoCols">
+                <!-- Gói hiện tại -->
+                <div class="panel-box" style="margin: 0;">
+                    <h3>🎫 Gói tập của tôi</h3>
+                    <div id="dashCurrentPackage" style="margin-top: 12px;">
+                        <p style="color: var(--steel); font-size: 13px;">Đang tải...</p>
+                    </div>
+                </div>
+                <!-- Lớp đã đăng kí -->
+                <div class="panel-box" style="margin: 0;">
+                    <h3>📅 Lớp đã đăng kí</h3>
+                    <div id="dashMyClasses" style="margin-top: 12px;">
+                        <p style="color: var(--steel); font-size: 13px;">Đang tải...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lịch sử check-in -->
+            <div class="panel-box" style="margin-top: 20px;">
+                <h3>🕒 Lịch sử điểm danh</h3>
+                <div id="dashAttendance" style="margin-top: 12px;">
+                    <p style="color: var(--steel); font-size: 13px;">Đang tải...</p>
+                </div>
+            </div>
+        </section>
+
         <!-- TAB 1: EXPLORE PACKAGES -->
-        <section id="tabPackages" class="tab-panel active">
+        <section id="tabPackages" class="tab-panel">
             <div style="margin-bottom: 20px;">
                 <h2>Danh sách Gói tập Phòng Gym</h2>
                 <p style="color: var(--steel); font-size: 14px;">Chọn gói tập phù hợp để bắt đầu hành trình rèn luyện sức khỏe.</p>
@@ -985,6 +1038,8 @@
         let activeMember = null;
         let packagesData = [];
         let memberPackages = [];
+        let myClasses = [];
+        let myAttendance = [];
         let classesData = [];
 
         function toast(msg, ok = true) {
@@ -1064,14 +1119,14 @@
             }
             const data = await api('POST', '/api/auth/login', { username, password });
             if (data) {
-                if (data.token) localStorage.setItem('token', data.token);
-                localStorage.setItem('currentUser', JSON.stringify({ accountId: data.accountId, fullName: data.fullName, role: data.role }));
                 const role = String(data.role || '').toLowerCase();
                 if (role !== 'member') {
-                    toast('Tài khoản này là ' + data.role + ', chuyển đến Admin...', false);
-                    setTimeout(() => window.location.href = 'admin.html', 1000);
+                    // Trang hội viên chỉ nhận tài khoản Member — admin hãy dùng admin.html
+                    toast('Đây là tài khoản ' + (data.role || 'Admin') + '. Vui lòng đăng nhập tại trang Quản trị (admin.html).', false);
                     return;
                 }
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('currentUser', JSON.stringify({ accountId: data.accountId, fullName: data.fullName, role: data.role }));
                 toast('Đăng nhập thành công hội viên: ' + data.fullName);
                 await initPortal();
             }
@@ -1105,6 +1160,8 @@
 
             activeMember = portal.member;
             memberPackages = portal.packages || [];
+            myClasses = portal.classes || [];
+            myAttendance = portal.attendance || [];
             selectMember(activeMember);
 
             loadPackages();
@@ -1143,6 +1200,115 @@
 
             // Update My Packages info
             renderMyPackageInfo();
+
+            // Update Dashboard
+            renderDashboard();
+        }
+
+        // ===== DASHBOARD =====
+        function daysRemaining(item) {
+            if (!item?.endDate) return null;
+            const end = new Date(item.endDate);
+            if (Number.isNaN(end.getTime())) return null;
+            return Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400000));
+        }
+
+        function formatDays(days) {
+            if (!days) return '';
+            return String(days).split(',')
+                .map(d => {
+                    const n = d.trim();
+                    if (n === '1' || n.toLowerCase() === 'cn' || n.toLowerCase() === 'sun') return 'CN';
+                    const num = parseInt(n, 10);
+                    if (!Number.isNaN(num)) return num === 1 || num === 8 ? 'CN' : 'T' + num;
+                    return n;
+                })
+                .join(' · ');
+        }
+
+        function formatTimeSpan(value) {
+            if (!value) return '';
+            // "07:30:00" -> "07:30"
+            return String(value).split(':').slice(0, 2).join(':');
+        }
+
+        function currentPackage() {
+            return memberPackages.find(item => isPackageCurrent(item)) || memberPackages[0] || null;
+        }
+
+        function renderDashboard() {
+            const pkg = currentPackage();
+
+            // Stats
+            const days = daysRemaining(pkg);
+            document.getElementById('dashDaysLeft').textContent = pkg
+                ? (days === null ? '--' : days)
+                : '0';
+            document.getElementById('dashDaysLeftNote').textContent = pkg
+                ? (days !== null && days > 0 ? 'ngày còn lại (đến ' + formatDate(pkg.endDate) + ')' : 'gói đã hết hạn')
+                : 'chưa có gói tập';
+            document.getElementById('dashClassCount').textContent = myClasses.length;
+            document.getElementById('dashVisitCount').textContent = myAttendance.length;
+
+            // Current package card
+            const pkgBox = document.getElementById('dashCurrentPackage');
+            if (!pkg) {
+                pkgBox.innerHTML = '<p style="color: var(--steel); font-size: 13px;">Bạn chưa có gói tập nào. Xem mục <strong style="color: var(--volt);">Gói tập & Ưu đãi</strong> để đăng ký nhé!</p>';
+            } else {
+                const paid = Number(pkg.paidPrice || 0).toLocaleString('vi-VN');
+                pkgBox.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="font-size: 17px; color: #fff;">${pkg.packageName}</strong>
+                        <span style="background: rgba(217,255,61,0.12); color: var(--volt); padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">${pkg.status || 'ĐÃ ĐĂNG KÍ'}</span>
+                    </div>
+                    <div style="color: var(--steel); font-size: 13px; line-height: 1.9;">
+                        <p>Thời lượng: <strong style="color: #fff;">${pkg.months} tháng</strong></p>
+                        <p>Bắt đầu: <strong style="color: #fff;">${formatDate(pkg.startDate)}</strong></p>
+                        <p>Kết thúc: <strong style="color: #fff;">${formatDate(pkg.endDate)}</strong></p>
+                        <p>Đã thanh toán: <strong style="color: var(--volt);">${paid} VND</strong></p>
+                    </div>
+                    <button class="btn secondary" style="width: 100%; margin-top: 10px; padding: 8px;" onclick="switchTab('tabMyPackages')">Xem chi tiết tất cả gói</button>`;
+            }
+
+            // My classes
+            const classBox = document.getElementById('dashMyClasses');
+            if (!myClasses.length) {
+                classBox.innerHTML = '<p style="color: var(--steel); font-size: 13px;">Bạn chưa đăng kí lớp nào. Xem mục <strong style="color: var(--volt);">Lớp học & HLV</strong> để đăng kí.</p>';
+            } else {
+                classBox.innerHTML = myClasses.map(c => {
+                    const time = c.startTime ? formatTimeSpan(c.startTime) + ' - ' + formatTimeSpan(c.endTime) : 'Linh hoạt';
+                    const days = c.daysOfWeek ? formatDays(c.daysOfWeek) : 'Linh hoạt';
+                    return `
+                        <div style="padding: 10px 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; gap: 8px;">
+                                <strong style="color: #fff; font-size: 14px;">${c.className}</strong>
+                                <span style="color: var(--volt); font-size: 12px; white-space: nowrap;">${days}${c.startTime ? ' · ' + time : ''}</span>
+                            </div>
+                            <div style="color: var(--steel); font-size: 12px; margin-top: 4px;">👤 HLV: <strong style="color: #fff;">${c.trainerName || 'Chưa phân công'}</strong></div>
+                        </div>`;
+                }).join('');
+            }
+
+            // Attendance history
+            const attBox = document.getElementById('dashAttendance');
+            if (!myAttendance.length) {
+                attBox.innerHTML = '<p style="color: var(--steel); font-size: 13px;">Chưa có lượt điểm danh nào. Bấm "⚡ Tự Check-in ngay" ở trên khi bạn đến phòng tập!</p>';
+            } else {
+                attBox.innerHTML = myAttendance.map(a => {
+                    const out = a.checkOutTime ? ' — check-out ' + formatDateTime(a.checkOutTime) : ' — <span style="color: var(--volt);">đang tập</span>';
+                    return `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--steel);">
+                            <span>✅ <strong style="color: #fff;">${formatDateTime(a.checkInTime)}</strong>${out}</span>
+                            <span>#${a.attendanceId}</span>
+                        </div>`;
+                }).join('');
+            }
+        }
+
+        function formatDate(value) {
+            if (!value) return '--/--/----';
+            const d = new Date(value);
+            return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString('vi-VN');
         }
 
         function formatDateTime(value) {
@@ -1190,27 +1356,36 @@
             classesData = data;
             const container = document.getElementById('classesListContainer');
 
-            container.innerHTML = data.map(c => `
-                <div class="class-card">
-                    <div class="class-header">
-                        <div class="class-name">${c.className}</div>
-                        <span class="class-capacity">Sức chứa: ${c.capacity}</span>
+            container.innerHTML = data.map(c => {
+                const days = c.daysOfWeek ? formatDays(c.daysOfWeek) : 'Linh hoạt';
+                const time = c.startTime ? formatTimeSpan(c.startTime) + ' - ' + formatTimeSpan(c.endTime) : '';
+                const schedule = time ? days + ' · ' + time : days;
+                return `
+                    <div class="class-card">
+                        <div class="class-header">
+                            <div class="class-name">${c.className}</div>
+                            <span class="class-capacity">Sức chứa: ${c.capacity}</span>
+                        </div>
+                        <div class="class-detail">
+                            <span>👤 Huấn luyện viên:</span>
+                            <strong style="color: #fff;">${c.trainerName || 'Đang sắp xếp'}</strong>
+                        </div>
+                        <div class="class-detail">
+                            <span>🕒 Lịch học:</span>
+                            <span style="color: var(--volt); font-weight: 700;">${schedule}</span>
+                        </div>
+                        <div class="class-detail">
+                            <span>🏢 Chi nhánh:</span>
+                            <span>Chi nhánh #${c.branchId || 1}</span>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <button class="btn secondary" style="width: 100%;" onclick="enrollClass(${c.classId}, '${c.className}')">
+                                ✓ Đăng ký tham gia lớp
+                            </button>
+                        </div>
                     </div>
-                    <div class="class-detail">
-                        <span>👤 Huấn luyện viên:</span>
-                        <strong style="color: #fff;">${c.trainerName || 'Đang sắp xếp'}</strong>
-                    </div>
-                    <div class="class-detail">
-                        <span>🏢 Chi nhánh:</span>
-                        <span>Chi nhánh #${c.branchId || 1}</span>
-                    </div>
-                    <div style="margin-top: 8px;">
-                        <button class="btn secondary" style="width: 100%;" onclick="enrollClass(${c.classId}, '${c.className}')">
-                            ✓ Đăng ký tham gia lớp
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function loadTrainers() {
@@ -1258,11 +1433,15 @@
                 toast('Vui lòng chọn ngày bắt đầu!', false);
                 return;
             }
+            if (!activeMember.branchId) {
+                toast('Hồ sơ của bạn chưa được gán chi nhánh. Vui lòng liên hệ quản trị viên!', false);
+                return;
+            }
 
             const body = {
                 memberId: activeMember.memberId,
                 packageId: pkgId,
-                branchId: activeMember.branchId || 1,
+                branchId: activeMember.branchId,
                 startDate: startDate,
                 accountId: null,
                 promoCode: promoCode,
@@ -1282,6 +1461,8 @@
             if (!portal || !portal.member) return;
             activeMember = portal.member;
             memberPackages = portal.packages || [];
+            myClasses = portal.classes || [];
+            myAttendance = portal.attendance || [];
             selectMember(activeMember);
         }
 
@@ -1296,6 +1477,7 @@
             });
             if (res) {
                 toast(`Đã đăng ký lớp "${className}" thành công!`);
+                await refreshMyPortal(); // cập nhật dashboard: số lớp đã đăng kí
             }
         }
 
@@ -1309,9 +1491,7 @@
             });
             if (res) {
                 toast('⚡ Điểm danh Check-in thành công!');
-                const now = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('sumCheckIn').textContent = 'Đã vào lúc ' + now;
-                document.getElementById('sumCheckIn').style.color = 'var(--volt)';
+                await refreshMyPortal(); // cập nhật dashboard: lượt tập + lịch sử điểm danh
             }
         }
 
