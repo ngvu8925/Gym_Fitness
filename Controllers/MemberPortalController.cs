@@ -44,7 +44,9 @@ namespace GymManagement.Api.Controllers
                     member.Address,
                     member.Status
                 },
-                packages = _memberAccounts.GetMyPackages(member.MemberId)
+                packages = _memberAccounts.GetMyPackages(member.MemberId),
+                classes = _memberAccounts.GetMyClasses(member.MemberId),
+                attendance = _memberAccounts.GetMyAttendance(member.MemberId, 10)
             });
         }
 

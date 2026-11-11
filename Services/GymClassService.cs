@@ -20,8 +20,17 @@ namespace GymManagement.Api.Services
                 TrainerId = DtoMapper.GetNullableInt(row, "TrainerId", "MaHLV"),
                 TrainerName = DtoMapper.GetString(row, "TrainerName", "TenHLV"),
                 Capacity = DtoMapper.GetInt(row, "Capacity", "SucChua"),
-                Status = DtoMapper.GetNullableBool(row, "Status", "TrangThai")
+                Status = DtoMapper.GetNullableBool(row, "Status", "TrangThai"),
+                DaysOfWeek = DtoMapper.GetString(row, "DaysOfWeek"),
+                StartTime = GetTimeSpan(row, "StartTime"),
+                EndTime = GetTimeSpan(row, "EndTime")
             });
+        }
+
+        private static TimeSpan? GetTimeSpan(System.Data.DataRow row, string column)
+        {
+            var value = DtoMapper.Get(row, column);
+            return value == null ? null : (TimeSpan)value;
         }
 
         public (bool Success, string Message, int ClassId) Add(GymClassRequest req)

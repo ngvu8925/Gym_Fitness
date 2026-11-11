@@ -40,6 +40,29 @@ namespace GymManagement.Api.DTOs
         public string? TrainerName { get; set; }
         public int Capacity { get; set; }
         public bool? Status { get; set; }
+        public string? DaysOfWeek { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
+    }
+
+    /// <summary>Lớp học hội viên đã đăng kí (Member Portal).</summary>
+    public class MemberClassItem
+    {
+        public int EnrollmentId { get; set; }
+        public int ClassId { get; set; }
+        public string ClassName { get; set; } = string.Empty;
+        public string? TrainerName { get; set; }
+        public string? DaysOfWeek { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
+    }
+
+    /// <summary>Lịch sử check-in của hội viên.</summary>
+    public class MemberAttendanceItem
+    {
+        public int AttendanceId { get; set; }
+        public DateTime CheckInTime { get; set; }
+        public DateTime? CheckOutTime { get; set; }
     }
 
     /// <summary>Huấn luyện viên (sp_Trainer_GetAll).</summary>

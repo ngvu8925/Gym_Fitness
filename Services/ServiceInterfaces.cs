@@ -66,6 +66,8 @@ namespace GymManagement.Api.Services
     {
         Member? GetMemberForAccount(int accountId);
         List<MemberPackageItem> GetMyPackages(int memberId);
+        List<MemberClassItem> GetMyClasses(int memberId);
+        List<MemberAttendanceItem> GetMyAttendance(int memberId, int top = 10);
         List<AccountMemberOptionItem> MemberOptions();
         (bool Success, string Message) LinkAccount(int memberId, int? accountId);
     }

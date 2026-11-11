@@ -72,5 +72,7 @@ namespace GymManagement.Api.Repositories
         int Link(int memberId, int? accountId);
         DataTable MemberOptions();
         DataTable GetMyRegistrations(int memberId);
+        DataTable GetMyClasses(int memberId);
+        DataTable GetMyAttendance(int memberId, int top = 10);
     }
 }

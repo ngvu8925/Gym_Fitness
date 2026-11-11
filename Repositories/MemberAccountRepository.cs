@@ -56,6 +56,19 @@ namespace GymManagement.Api.Repositories
                 new SqlParameter("@MemberId", memberId));
         }
 
+        public DataTable GetMyClasses(int memberId)
+        {
+            return _db.ExecuteQuery("sp_MemberPortal_GetMyClasses",
+                new SqlParameter("@MemberId", memberId));
+        }
+
+        public DataTable GetMyAttendance(int memberId, int top = 10)
+        {
+            return _db.ExecuteQuery("sp_MemberPortal_GetMyAttendance",
+                new SqlParameter("@MemberId", memberId),
+                new SqlParameter("@Top", top));
+        }
+
         private static Member MapMember(DataRow row)
         {
             return new Member

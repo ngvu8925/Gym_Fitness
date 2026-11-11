@@ -19,7 +19,10 @@ namespace GymManagement.Api.Repositories
                 new("@BranchId", (object?)req.BranchId ?? DBNull.Value),
                 new("@ClassName", req.Name),
                 new("@TrainerId", (object?)req.TrainerId ?? DBNull.Value),
-                new("@Capacity", req.Capacity)
+                new("@Capacity", req.Capacity),
+                new("@DaysOfWeek", (object?)req.DaysOfWeek ?? DBNull.Value),
+                new("@StartTime", (object?)req.StartTime ?? DBNull.Value),
+                new("@EndTime", (object?)req.EndTime ?? DBNull.Value)
             };
             var dt = _db.ExecuteQuery("sp_Class_Create", ps);
             return Convert.ToInt32(dt.Rows[0]["ClassId"]);
@@ -33,7 +36,10 @@ namespace GymManagement.Api.Repositories
                 new("@BranchId", (object?)req.BranchId ?? DBNull.Value),
                 new("@ClassName", req.Name),
                 new("@TrainerId", (object?)req.TrainerId ?? DBNull.Value),
-                new("@Capacity", req.Capacity)
+                new("@Capacity", req.Capacity),
+                new("@DaysOfWeek", (object?)req.DaysOfWeek ?? DBNull.Value),
+                new("@StartTime", (object?)req.StartTime ?? DBNull.Value),
+                new("@EndTime", (object?)req.EndTime ?? DBNull.Value)
             };
             _db.ExecuteNonQuery("sp_Class_Update", ps);
         }

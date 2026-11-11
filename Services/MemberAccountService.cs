@@ -56,6 +56,38 @@ namespace GymManagement.Api.Services
             });
         }
 
+        public List<MemberClassItem> GetMyClasses(int memberId)
+        {
+            var dt = _repo.GetMyClasses(memberId);
+            return DtoMapper.MapList(dt, row => new MemberClassItem
+            {
+                EnrollmentId = DtoMapper.GetInt(row, "ClassRegistrationId"),
+                ClassId = DtoMapper.GetInt(row, "ClassId"),
+                ClassName = DtoMapper.GetString(row, "ClassName") ?? string.Empty,
+                TrainerName = DtoMapper.GetString(row, "TrainerName"),
+                DaysOfWeek = DtoMapper.GetString(row, "DaysOfWeek"),
+                StartTime = GetTimeSpan(row, "StartTime"),
+                EndTime = GetTimeSpan(row, "EndTime")
+            });
+        }
+
+        public List<MemberAttendanceItem> GetMyAttendance(int memberId, int top = 10)
+        {
+            var dt = _repo.GetMyAttendance(memberId, top);
+            return DtoMapper.MapList(dt, row => new MemberAttendanceItem
+            {
+                AttendanceId = DtoMapper.GetInt(row, "AttendanceId"),
+                CheckInTime = DtoMapper.GetNullableDate(row, "CheckInTime") ?? default,
+                CheckOutTime = DtoMapper.GetNullableDate(row, "CheckOutTime")
+            });
+        }
+
+        private static TimeSpan? GetTimeSpan(System.Data.DataRow row, string column)
+        {
+            var value = DtoMapper.Get(row, column);
+            return value == null ? null : (TimeSpan)value;
+        }
+
         public List<AccountMemberOptionItem> MemberOptions()
         {
             var dt = _repo.MemberOptions();

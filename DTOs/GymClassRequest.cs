@@ -6,6 +6,9 @@ namespace GymManagement.Api.DTOs
         public string Name { get; set; } = string.Empty;
         public int? TrainerId { get; set; }
         public int Capacity { get; set; } = 20;
+        public string? DaysOfWeek { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
     }
 
     public class ClassEnrollmentRequest
