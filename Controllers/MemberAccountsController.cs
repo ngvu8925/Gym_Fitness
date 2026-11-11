@@ -1,4 +1,4 @@
-using GymManagement.Api.Repositories;
+using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,11 +9,11 @@ namespace GymManagement.Api.Controllers
     [Authorize(Roles = "Admin")]
     public class MemberAccountsController : ControllerBase
     {
-        private readonly MemberAccountRepository _repo;
+        private readonly MemberAccountService _service;
 
-        public MemberAccountsController(MemberAccountRepository repo) => _repo = repo;
+        public MemberAccountsController(MemberAccountService service) => _service = service;
 
         [HttpGet("member-options")]
-        public IActionResult MemberOptions() => Ok(_repo.MemberOptions().ToJsonList());
+        public IActionResult MemberOptions() => Ok(_service.MemberOptions());
     }
 }

@@ -15,15 +15,15 @@ namespace GymManagement.Api.Controllers
 
         [HttpGet("monthly-revenue")]
         public IActionResult MonthlyRevenue([FromQuery] int year, [FromQuery] int month)
-            => Ok(_service.MonthlyRevenue(year, month).ToJsonList());
+            => Ok(_service.MonthlyRevenue(year, month));
 
         [HttpGet("all-monthly-revenue")]
-        public IActionResult AllMonthlyRevenue() => Ok(_service.AllMonthlyRevenue().ToJsonList());
+        public IActionResult AllMonthlyRevenue() => Ok(_service.AllMonthlyRevenue());
 
         [HttpGet("best-selling-packages")]
-        public IActionResult BestSellingPackages() => Ok(_service.BestSellingPackages().ToJsonList());
+        public IActionResult BestSellingPackages() => Ok(_service.BestSellingPackages());
 
         [HttpGet("branch-revenue")]
-        public IActionResult BranchRevenue() => Ok(_service.BranchRevenue().ToJsonList());
+        public IActionResult BranchRevenue() => Ok(_service.BranchRevenue());
     }
 }

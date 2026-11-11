@@ -20,7 +20,7 @@ namespace GymManagement.Api.Controllers
         }
 
         [HttpGet]
-        public IActionResult List() => Ok(_service.List().ToJsonList());
+        public IActionResult List() => Ok(_service.List());
 
         [HttpPost]
         [Authorize(Roles = "Admin")]

@@ -20,7 +20,7 @@ namespace GymManagement.Api.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public IActionResult Search([FromQuery] string? keyword) => Ok(_service.Search(keyword).ToJsonList());
+        public IActionResult Search([FromQuery] string? keyword) => Ok(_service.Search(keyword));
 
         [HttpPost]
         [Authorize(Roles = "Admin")]

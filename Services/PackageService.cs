@@ -1,4 +1,3 @@
-using System.Data;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Repositories;
 
@@ -10,7 +9,20 @@ namespace GymManagement.Api.Services
 
         public PackageService(PackageRepository repo) => _repo = repo;
 
-        public DataTable List() => _repo.List();
+        public List<PackageListItem> List()
+        {
+            var dt = _repo.List();
+            return DtoMapper.MapList(dt, row => new PackageListItem
+            {
+                PackageId = DtoMapper.GetInt(row, "PackageId", "MaGoi"),
+                PackageName = DtoMapper.GetString(row, "PackageName", "TenGoi") ?? string.Empty,
+                PackageType = DtoMapper.GetString(row, "PackageType", "LoaiGoi"),
+                Months = DtoMapper.GetInt(row, "DurationInMonths", "SoThang"),
+                Price = DtoMapper.GetDecimal(row, "UnitPrice", "DonGia"),
+                Description = DtoMapper.GetString(row, "Description", "MoTa"),
+                Status = DtoMapper.GetNullableBool(row, "Status", "TrangThai")
+            });
+        }
 
         public (bool Success, string Message) Add(PackageRequest req)
         {
@@ -45,6 +57,18 @@ namespace GymManagement.Api.Services
 
         public void Resume(int pauseId) => _repo.Resume(pauseId);
 
-        public DataTable ExpiringSoon(int days) => _repo.ExpiringSoon(days);
+        public List<ExpiringMemberItem> ExpiringSoon(int days)
+        {
+            var dt = _repo.ExpiringSoon(days);
+            return DtoMapper.MapList(dt, row => new ExpiringMemberItem
+            {
+                MemberId = DtoMapper.GetInt(row, "MemberId", "MaHV"),
+                FullName = DtoMapper.GetString(row, "FullName", "HoTen") ?? string.Empty,
+                Phone = DtoMapper.GetString(row, "PhoneNumber", "Phone", "SDT"),
+                PackageName = DtoMapper.GetString(row, "PackageName", "TenGoi"),
+                StartDate = DtoMapper.GetNullableDate(row, "StartDate", "NgayBatDau"),
+                EndDate = DtoMapper.GetNullableDate(row, "EndDate", "NgayKetThuc")
+            });
+        }
     }
 }

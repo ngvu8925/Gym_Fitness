@@ -1,4 +1,5 @@
 using System.Data;
+using GymManagement.Api.DTOs;
 using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
@@ -9,11 +10,10 @@ namespace GymManagement.Api.Services
 
         public AccountService(AccountRepository repo) => _repo = repo;
 
-        public (bool Success, string Message, DataRow? Account) Login(string username, string password)
+        public (bool Success, string Message, LoginResult? Account) Login(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return (false, "Please enter both username and password", null);
-
             DataTable dt = _repo.GetByUsername(username);
 
             if (dt.Rows.Count == 0)
@@ -31,7 +31,17 @@ namespace GymManagement.Api.Services
                 _repo.UpdatePasswordHash(Convert.ToInt32(row["AccountId"]), upgradeHash);
             }
 
-            return (true, "Login successful", row);
+            var result = new LoginResult
+            {
+                AccountId = Convert.ToInt32(row["AccountId"]),
+                FullName = row["FullName"]?.ToString() ?? string.Empty,
+                Role = row["Role"]?.ToString() ?? "User",
+                BranchId = row.Table.Columns.Contains("BranchId") && row["BranchId"] != DBNull.Value
+                    ? Convert.ToInt32(row["BranchId"])
+                    : null
+            };
+
+            return (true, "Login successful", result);
         }
 
         private bool IsPasswordValid(string password, string storedHash, out string? upgradeHash)

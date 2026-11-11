@@ -20,29 +20,21 @@ namespace GymManagement.Api.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
-            var (success, message, row) = _service.Login(req.Username, req.Password);
+            var (success, message, account) = _service.Login(req.Username, req.Password);
 
-            if (!success)
+            if (!success || account == null)
                 return Unauthorized(new { message });
 
-            var accountId = Convert.ToInt32(row!.Table.Columns.Contains("AccountId") ? row["AccountId"] : row["MaTK"]);
-            var fullName = (row.Table.Columns.Contains("FullName") ? row["FullName"] : row["HoTen"])?.ToString() ?? string.Empty;
-            var role = (row.Table.Columns.Contains("Role") ? row["Role"] : row["VaiTro"])?.ToString() ?? "User";
-            var rawBranchId = GetNullableValue(row, "BranchId", "MaCN");
-            int? branchId = rawBranchId != null ? Convert.ToInt32(rawBranchId) : null;
+            var token = _jwtService.GenerateToken(account.AccountId, req.Username, account.Role, account.BranchId);
 
-            var token = _jwtService.GenerateToken(accountId, req.Username, role, branchId);
-
-            var result = new
+            return Ok(new
             {
                 token,
-                accountId,
-                fullName,
-                role,
-                branchId
-            };
-
-            return Ok(result);
+                accountId = account.AccountId,
+                fullName = account.FullName,
+                role = account.Role,
+                branchId = account.BranchId
+            });
         }
 
         [HttpPost("register")]
@@ -61,13 +53,6 @@ namespace GymManagement.Api.Controllers
                 fullName = req.FullName,
                 role = "Member"
             });
-        }
-
-        private static object? GetNullableValue(System.Data.DataRow row, string col1, string col2)
-        {
-            string col = row.Table.Columns.Contains(col1) ? col1 : (row.Table.Columns.Contains(col2) ? col2 : string.Empty);
-            if (string.IsNullOrEmpty(col) || row[col] == DBNull.Value) return null;
-            return row[col];
         }
     }
 }

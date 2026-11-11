@@ -1,4 +1,5 @@
 using System.Data;
+using GymManagement.Api.DTOs;
 using GymManagement.Api.Models;
 using GymManagement.Api.Repositories;
 
@@ -29,6 +30,45 @@ namespace GymManagement.Api.Services
         }
 
         public DataTable GetMyRegistrations(int memberId) => _repo.GetMyRegistrations(memberId);
+
+        public List<MemberPackageItem> GetMyPackages(int memberId)
+        {
+            var dt = _repo.GetMyRegistrations(memberId);
+            return DtoMapper.MapList(dt, row =>
+            {
+                decimal listPrice = DtoMapper.GetDecimal(row, "UnitPrice");
+                decimal discount = DtoMapper.GetDecimal(row, "DiscountAmount");
+
+                return new MemberPackageItem
+                {
+                    RegistrationId = DtoMapper.GetInt(row, "RegistrationId"),
+                    PackageId = DtoMapper.GetInt(row, "PackageId"),
+                    PackageName = DtoMapper.GetString(row, "PackageName") ?? string.Empty,
+                    PackageType = DtoMapper.GetString(row, "PackageType") ?? string.Empty,
+                    Months = DtoMapper.GetInt(row, "DurationInMonths"),
+                    ListPrice = listPrice,
+                    DiscountAmount = discount,
+                    PaidPrice = listPrice > discount ? listPrice - discount : 0,
+                    StartDate = DtoMapper.GetNullableDate(row, "StartDate") ?? default,
+                    EndDate = DtoMapper.GetNullableDate(row, "EndDate") ?? default,
+                    Status = DtoMapper.GetString(row, "Status") ?? string.Empty
+                };
+            });
+        }
+
+        public List<AccountMemberOptionItem> MemberOptions()
+        {
+            var dt = _repo.MemberOptions();
+            return DtoMapper.MapList(dt, row => new AccountMemberOptionItem
+            {
+                AccountId = DtoMapper.GetInt(row, "AccountId", "MaTK"),
+                Username = DtoMapper.GetString(row, "Username", "TenDangNhap") ?? string.Empty,
+                FullName = DtoMapper.GetString(row, "FullName", "HoTen") ?? string.Empty,
+                Phone = DtoMapper.GetString(row, "Phone", "PhoneNumber", "SDT"),
+                Email = DtoMapper.GetString(row, "Email"),
+                MemberId = DtoMapper.GetNullableInt(row, "MemberId", "MaHV")
+            });
+        }
 
         public (bool Success, string Message) LinkAccount(int memberId, int? accountId)
         {

@@ -1,4 +1,3 @@
-using System.Data;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Repositories;
 
@@ -10,7 +9,20 @@ namespace GymManagement.Api.Services
 
         public GymClassService(GymClassRepository repo) => _repo = repo;
 
-        public DataTable List() => _repo.List();
+        public List<ClassListItem> List()
+        {
+            var dt = _repo.List();
+            return DtoMapper.MapList(dt, row => new ClassListItem
+            {
+                ClassId = DtoMapper.GetInt(row, "ClassId", "MaLop"),
+                BranchId = DtoMapper.GetNullableInt(row, "BranchId", "MaCN"),
+                ClassName = DtoMapper.GetString(row, "ClassName", "TenLop") ?? string.Empty,
+                TrainerId = DtoMapper.GetNullableInt(row, "TrainerId", "MaHLV"),
+                TrainerName = DtoMapper.GetString(row, "TrainerName", "TenHLV"),
+                Capacity = DtoMapper.GetInt(row, "Capacity", "SucChua"),
+                Status = DtoMapper.GetNullableBool(row, "Status", "TrangThai")
+            });
+        }
 
         public (bool Success, string Message, int ClassId) Add(GymClassRequest req)
         {

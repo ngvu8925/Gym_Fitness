@@ -14,7 +14,7 @@ namespace GymManagement.Api.Controllers
         public TrainersController(TrainerService service) => _service = service;
 
         [HttpGet]
-        public IActionResult List() => Ok(_service.List().ToJsonList());
+        public IActionResult List() => Ok(_service.List());
 
         [HttpPost]
         [Authorize(Roles = "Admin")]

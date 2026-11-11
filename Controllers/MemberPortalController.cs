@@ -1,4 +1,3 @@
-using System.Data;
 using System.Security.Claims;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
@@ -30,31 +29,6 @@ namespace GymManagement.Api.Controllers
             if (member == null)
                 return Conflict(new { message = "This account is not linked to a member profile. Please contact the administrator." });
 
-            var registrations = _memberAccounts.GetMyRegistrations(member.MemberId);
-
-            var packages = new List<object>();
-            foreach (DataRow row in registrations.Rows)
-            {
-                decimal listPrice = row["UnitPrice"] == DBNull.Value ? 0 : Convert.ToDecimal(row["UnitPrice"]);
-                decimal discount = row["DiscountAmount"] == DBNull.Value ? 0 : Convert.ToDecimal(row["DiscountAmount"]);
-                decimal paidPrice = listPrice > discount ? listPrice - discount : 0;
-
-                packages.Add(new
-                {
-                    registrationId = Convert.ToInt32(row["RegistrationId"]),
-                    packageId = Convert.ToInt32(row["PackageId"]),
-                    packageName = row["PackageName"]?.ToString(),
-                    packageType = row["PackageType"]?.ToString(),
-                    months = row["DurationInMonths"] == DBNull.Value ? 0 : Convert.ToInt32(row["DurationInMonths"]),
-                    listPrice,
-                    discountAmount = discount,
-                    paidPrice,
-                    startDate = row["StartDate"],
-                    endDate = row["EndDate"],
-                    status = row["Status"]?.ToString()
-                });
-            }
-
             return Ok(new
             {
                 member = new
@@ -69,7 +43,7 @@ namespace GymManagement.Api.Controllers
                     member.Address,
                     member.Status
                 },
-                packages
+                packages = _memberAccounts.GetMyPackages(member.MemberId)
             });
         }
 

@@ -14,7 +14,7 @@ namespace GymManagement.Api.Controllers
         public PackagesController(PackageService service) => _service = service;
 
         [HttpGet]
-        public IActionResult List() => Ok(_service.List().ToJsonList());
+        public IActionResult List() => Ok(_service.List());
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
@@ -27,6 +27,6 @@ namespace GymManagement.Api.Controllers
 
         [HttpGet("expiring-soon")]
         [Authorize(Roles = "Admin")]
-        public IActionResult ExpiringSoon([FromQuery] int days = 7) => Ok(_service.ExpiringSoon(days).ToJsonList());
+        public IActionResult ExpiringSoon([FromQuery] int days = 7) => Ok(_service.ExpiringSoon(days));
     }
 }
