@@ -24,5 +24,22 @@ namespace GymManagement.Api.Controllers
             if (!success) return BadRequest(new { message });
             return Ok(new { message, trainerId });
         }
+
+        [HttpPut("{trainerId}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Update(int trainerId, [FromBody] TrainerRequest req)
+        {
+            var (success, message) = _service.Update(trainerId, req);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
+        }
+
+        [HttpDelete("{trainerId}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Delete(int trainerId)
+        {
+            _service.Delete(trainerId);
+            return Ok(new { message = "Trainer deactivated" });
+        }
     }
 }

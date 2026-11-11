@@ -31,5 +31,15 @@ namespace GymManagement.Api.Services
             int trainerId = _repo.Add(req);
             return (true, "Trainer added successfully", trainerId);
         }
+        public (bool Success, string Message) Update(int trainerId, TrainerRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.FullName))
+                return (false, "Full name is required");
+
+            _repo.Update(trainerId, req);
+            return (true, "Trainer updated successfully");
+        }
+
+        public void Delete(int trainerId) => _repo.Delete(trainerId);
     }
 }

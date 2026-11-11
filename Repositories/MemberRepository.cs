@@ -42,6 +42,12 @@ namespace GymManagement.Api.Repositories
             _db.ExecuteNonQuery("sp_Member_Update", ps);
         }
 
+        public DataTable GetById(int memberId)
+        {
+            return _db.ExecuteQuery("sp_Member_GetById",
+                new SqlParameter("@MemberId", memberId));
+        }
+
         public void Delete(int memberId)
         {
             _db.ExecuteNonQuery("sp_Member_Delete", new SqlParameter("@MemberId", memberId));

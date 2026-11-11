@@ -22,6 +22,15 @@ namespace GymManagement.Api.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Search([FromQuery] string? keyword) => Ok(_service.Search(keyword));
 
+        [HttpGet("{memberId}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult GetById(int memberId)
+        {
+            var member = _service.GetById(memberId);
+            if (member == null) return NotFound(new { message = "Member not found" });
+            return Ok(member);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public IActionResult Add([FromBody] MemberRequest req)

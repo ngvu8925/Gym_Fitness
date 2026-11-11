@@ -37,6 +37,21 @@ namespace GymManagement.Api.Services
             return (true, "Package added successfully");
         }
 
+        public (bool Success, string Message) Update(int packageId, PackageRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return (false, "Package name is required");
+            if (req.Months <= 0)
+                return (false, "Months must be greater than 0");
+            if (req.Price < 0)
+                return (false, "Price is invalid");
+
+            _repo.Update(packageId, req);
+            return (true, "Package updated successfully");
+        }
+
+        public void Delete(int packageId) => _repo.Delete(packageId);
+
         public (bool Success, string Message, int RegistrationId, decimal DiscountAmount) Register(PackageRegistrationRequest req)
         {
             if (req.StartDate.Date < DateTime.Today)

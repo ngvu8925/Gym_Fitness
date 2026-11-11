@@ -24,6 +24,25 @@ namespace GymManagement.Api.Repositories
             _db.ExecuteNonQuery("sp_MembershipPackage_Create", ps);
         }
 
+        public void Update(int packageId, PackageRequest req)
+        {
+            var ps = new SqlParameter[]
+            {
+                new("@PackageId", packageId),
+                new("@PackageName", req.Name),
+                new("@PackageType", req.Type),
+                new("@DurationInMonths", req.Months),
+                new("@UnitPrice", req.Price),
+                new("@Description", (object?)req.Description ?? DBNull.Value)
+            };
+            _db.ExecuteNonQuery("sp_MembershipPackage_Update", ps);
+        }
+
+        public void Delete(int packageId)
+        {
+            _db.ExecuteNonQuery("sp_MembershipPackage_Delete", new SqlParameter("@PackageId", packageId));
+        }
+
         public (int RegistrationId, decimal DiscountAmount) Register(PackageRegistrationRequest req)
         {
             var paymentMethod = string.Equals(req.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase)

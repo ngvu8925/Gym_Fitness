@@ -25,6 +25,24 @@ namespace GymManagement.Api.Repositories
             return Convert.ToInt32(dt.Rows[0]["ClassId"]);
         }
 
+        public void Update(int classId, GymClassRequest req)
+        {
+            var ps = new SqlParameter[]
+            {
+                new("@ClassId", classId),
+                new("@BranchId", (object?)req.BranchId ?? DBNull.Value),
+                new("@ClassName", req.Name),
+                new("@TrainerId", (object?)req.TrainerId ?? DBNull.Value),
+                new("@Capacity", req.Capacity)
+            };
+            _db.ExecuteNonQuery("sp_Class_Update", ps);
+        }
+
+        public void Delete(int classId)
+        {
+            _db.ExecuteNonQuery("sp_Class_Delete", new SqlParameter("@ClassId", classId));
+        }
+
         public int Enroll(ClassEnrollmentRequest req)
         {
             var ps = new SqlParameter[]

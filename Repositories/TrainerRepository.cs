@@ -25,5 +25,23 @@ namespace GymManagement.Api.Repositories
             var dt = _db.ExecuteQuery("sp_Trainer_Create", ps);
             return Convert.ToInt32(dt.Rows[0]["TrainerId"]);
         }
+        public void Update(int trainerId, TrainerRequest req)
+        {
+            var ps = new SqlParameter[]
+            {
+                new("@TrainerId", trainerId),
+                new("@BranchId", (object?)req.BranchId ?? DBNull.Value),
+                new("@FullName", req.FullName),
+                new("@Specialty", (object?)req.Specialty ?? DBNull.Value),
+                new("@PhoneNumber", (object?)req.Phone ?? DBNull.Value),
+                new("@HireDate", (object?)req.HireDate ?? DBNull.Value)
+            };
+            _db.ExecuteNonQuery("sp_Trainer_Update", ps);
+        }
+
+        public void Delete(int trainerId)
+        {
+            _db.ExecuteNonQuery("sp_Trainer_Delete", new SqlParameter("@TrainerId", trainerId));
+        }
     }
 }

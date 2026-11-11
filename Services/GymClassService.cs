@@ -35,6 +35,19 @@ namespace GymManagement.Api.Services
             return (true, "Class added successfully", classId);
         }
 
+        public (bool Success, string Message) Update(int classId, GymClassRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return (false, "Class name is required");
+            if (req.Capacity <= 0)
+                return (false, "Capacity must be greater than 0");
+
+            _repo.Update(classId, req);
+            return (true, "Class updated successfully");
+        }
+
+        public void Delete(int classId) => _repo.Delete(classId);
+
         public (bool Success, string Message, int EnrollmentId) Enroll(ClassEnrollmentRequest req)
         {
             try

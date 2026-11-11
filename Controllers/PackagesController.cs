@@ -25,6 +25,23 @@ namespace GymManagement.Api.Controllers
             return Ok(new { message });
         }
 
+        [HttpPut("{packageId}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Update(int packageId, [FromBody] PackageRequest req)
+        {
+            var (success, message) = _service.Update(packageId, req);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
+        }
+
+        [HttpDelete("{packageId}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Delete(int packageId)
+        {
+            _service.Delete(packageId);
+            return Ok(new { message = "Package deactivated" });
+        }
+
         [HttpGet("expiring-soon")]
         [Authorize(Roles = "Admin")]
         public IActionResult ExpiringSoon([FromQuery] int days = 7) => Ok(_service.ExpiringSoon(days));
