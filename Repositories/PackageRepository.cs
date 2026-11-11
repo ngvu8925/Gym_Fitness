@@ -45,10 +45,6 @@ namespace GymManagement.Api.Repositories
 
         public (int RegistrationId, decimal DiscountAmount) Register(PackageRegistrationRequest req)
         {
-            var paymentMethod = string.Equals(req.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase)
-                ? "Tiền mặt"
-                : req.PaymentMethod;
-
             var ps = new SqlParameter[]
             {
                 new("@MemberId", req.MemberId),
@@ -57,7 +53,7 @@ namespace GymManagement.Api.Repositories
                 new("@StartDate", req.StartDate),
                 new("@AccountId", req.AccountId),
                 new("@PromoCode", (object?)req.PromoCode ?? DBNull.Value),
-                new("@PaymentMethod", paymentMethod)
+                new("@PaymentMethod", req.PaymentMethod)
             };
             var dt = _db.ExecuteQuery("sp_PackageRegistration_Create", ps);
             int registrationId = Convert.ToInt32(dt.Rows[0]["RegistrationId"]);

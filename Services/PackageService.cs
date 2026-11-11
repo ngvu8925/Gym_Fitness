@@ -59,6 +59,12 @@ namespace GymManagement.Api.Services
 
             try
             {
+                // Business rule: hiển thị "Cash" nhưng DB lưu tên tiếng Việt.
+                var paymentMethod = string.Equals(req.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase)
+                    ? "Tiền mặt"
+                    : req.PaymentMethod;
+                req.PaymentMethod = paymentMethod;
+
                 var (registrationId, discountAmount) = _repo.Register(req);
                 return (true, "Package registered successfully", registrationId, discountAmount);
             }

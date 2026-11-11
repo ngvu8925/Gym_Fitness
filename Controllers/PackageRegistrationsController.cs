@@ -32,8 +32,11 @@ namespace GymManagement.Api.Controllers
                 if (member == null)
                     return Conflict(new { message = "This account is not linked to a member profile." });
 
+                if (member.BranchId == null)
+                    return BadRequest(new { message = "Member has no branch assigned. Please contact the administrator to set a branch." });
+
                 req.MemberId = member.MemberId;
-                req.BranchId = member.BranchId ?? 1;
+                req.BranchId = member.BranchId.Value;
             }
             else if (!User.IsInRole("Admin"))
             {

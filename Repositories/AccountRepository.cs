@@ -64,7 +64,7 @@ namespace GymManagement.Api.Repositories
                 new("@PhoneNumber", (object?)phone ?? DBNull.Value),
                 new("@Email", (object?)email ?? DBNull.Value),
                 new("@Status", true),
-                new("@CreatedAt", DateTime.Now)
+                new("@CreatedAt", DateTime.UtcNow)
             };
 
             string sql = @"
