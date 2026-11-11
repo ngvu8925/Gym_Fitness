@@ -8,7 +8,6 @@ namespace GymManagement.Api.Repositories
         private readonly DatabaseHelper _db;
 
         public ReportRepository(DatabaseHelper db) => _db = db;
-        public ReportRepository() : this(new DatabaseHelper()) { }
 
         public DataTable MonthlyRevenue(int year, int month)
         {

@@ -9,7 +9,6 @@ namespace GymManagement.Api.Services
         private readonly MemberRepository _repo;
 
         public MemberService(MemberRepository repo) => _repo = repo;
-        public MemberService() : this(new MemberRepository()) { }
 
         public (bool Success, string Message, int MemberId) Add(MemberRequest member)
         {

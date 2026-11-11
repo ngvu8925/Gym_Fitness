@@ -9,7 +9,6 @@ namespace GymManagement.Api.Services
         private readonly PackageRepository _repo;
 
         public PackageService(PackageRepository repo) => _repo = repo;
-        public PackageService() : this(new PackageRepository()) { }
 
         public DataTable List() => _repo.List();
 

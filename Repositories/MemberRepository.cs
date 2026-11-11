@@ -9,7 +9,6 @@ namespace GymManagement.Api.Repositories
         private readonly DatabaseHelper _db;
 
         public MemberRepository(DatabaseHelper db) => _db = db;
-        public MemberRepository() : this(new DatabaseHelper()) { }
 
         public int Add(MemberRequest member)
         {

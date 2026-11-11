@@ -8,7 +8,6 @@ namespace GymManagement.Api.Services
         private readonly AccountRepository _repo;
 
         public AccountService(AccountRepository repo) => _repo = repo;
-        public AccountService() : this(new AccountRepository()) { }
 
         public (bool Success, string Message, DataRow? Account) Login(string username, string password)
         {

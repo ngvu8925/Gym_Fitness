@@ -7,7 +7,6 @@ namespace GymManagement.Api.Services
         private readonly AttendanceRepository _repo;
 
         public AttendanceService(AttendanceRepository repo) => _repo = repo;
-        public AttendanceService() : this(new AttendanceRepository()) { }
 
         public (bool Success, string Message) CheckIn(int memberId)
         {

@@ -10,12 +10,9 @@ namespace GymManagement.Api.Repositories
         public DatabaseHelper(IConfiguration config)
         {
             _connString = config.GetConnectionString("DefaultConnection")
-                ?? "Data Source=localhost\\SQLEXPRESS;Initial Catalog=QL_GymFitness_Pro;User ID=sa;Password=123123;TrustServerCertificate=True;";
-        }
-
-        public DatabaseHelper()
-        {
-            _connString = "Data Source=localhost\\SQLEXPRESS;Initial Catalog=QL_GymFitness_Pro;User ID=sa;Password=123123;TrustServerCertificate=True;";
+                ?? throw new InvalidOperationException(
+                    "Connection string 'DefaultConnection' chưa được cấu hình. " +
+                    "Đặt trong user secrets: dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"<value>\"");
         }
 
         public DataTable ExecuteQuery(string spName, params SqlParameter[] parameters)

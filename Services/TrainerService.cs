@@ -9,7 +9,6 @@ namespace GymManagement.Api.Services
         private readonly TrainerRepository _repo;
 
         public TrainerService(TrainerRepository repo) => _repo = repo;
-        public TrainerService() : this(new TrainerRepository()) { }
 
         public DataTable List() => _repo.List();
 

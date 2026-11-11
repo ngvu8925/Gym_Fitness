@@ -8,7 +8,6 @@ namespace GymManagement.Api.Services
         private readonly ReportRepository _repo;
 
         public ReportService(ReportRepository repo) => _repo = repo;
-        public ReportService() : this(new ReportRepository()) { }
 
         public DataTable MonthlyRevenue(int year, int month) => _repo.MonthlyRevenue(year, month);
 

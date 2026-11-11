@@ -7,7 +7,6 @@ namespace GymManagement.Api.Repositories
         private readonly DatabaseHelper _db;
 
         public AttendanceRepository(DatabaseHelper db) => _db = db;
-        public AttendanceRepository() : this(new DatabaseHelper()) { }
 
         public void CheckIn(int memberId)
         {

@@ -8,7 +8,6 @@ namespace GymManagement.Api.Repositories
         private readonly DatabaseHelper _db;
 
         public AccountRepository(DatabaseHelper db) => _db = db;
-        public AccountRepository() : this(new DatabaseHelper()) { }
 
         /// <summary>
         /// Lấy account theo username (kèm hash mật khẩu) để service tự verify.

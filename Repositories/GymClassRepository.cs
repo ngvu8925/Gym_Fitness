@@ -9,7 +9,6 @@ namespace GymManagement.Api.Repositories
         private readonly DatabaseHelper _db;
 
         public GymClassRepository(DatabaseHelper db) => _db = db;
-        public GymClassRepository() : this(new DatabaseHelper()) { }
 
         public DataTable List() => _db.ExecuteQuery("sp_Class_GetAll");
 
