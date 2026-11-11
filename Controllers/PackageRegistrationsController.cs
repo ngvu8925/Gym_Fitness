@@ -1,6 +1,6 @@
+using GymManagement.Api.Common;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,11 +23,12 @@ namespace GymManagement.Api.Controllers
         [Authorize]
         public IActionResult Register([FromBody] PackageRegistrationRequest req)
         {
-            if (!TryGetAccountId(out var accountId)) return Unauthorized();
+            var accountId = User.GetAccountId();
+            if (accountId == null) return Unauthorized();
 
             if (User.IsInRole("Member"))
             {
-                var member = _memberAccounts.GetMemberForAccount(accountId);
+                var member = _memberAccounts.GetMemberForAccount(accountId.Value);
                 if (member == null)
                     return Conflict(new { message = "This account is not linked to a member profile." });
 
@@ -40,7 +41,7 @@ namespace GymManagement.Api.Controllers
             }
 
             // The authenticated account is the actor; never trust an account ID sent by the browser.
-            req.AccountId = accountId;
+            req.AccountId = accountId.Value;
             var (success, message, registrationId, discountAmount) = _service.Register(req);
             if (!success) return BadRequest(new { message });
             return Ok(new { message, registrationId, discountAmount });
@@ -60,13 +61,6 @@ namespace GymManagement.Api.Controllers
         {
             _service.Resume(pauseId);
             return Ok(new { message = "Package resumed" });
-        }
-
-        private bool TryGetAccountId(out int accountId)
-        {
-            var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? User.FindFirstValue("AccountId");
-            return int.TryParse(value, out accountId);
         }
     }
 }

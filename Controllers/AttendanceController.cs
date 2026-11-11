@@ -1,6 +1,6 @@
+using GymManagement.Api.Common;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,10 +25,9 @@ namespace GymManagement.Api.Controllers
         {
             if (User.IsInRole("Member"))
             {
-                var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                    ?? User.FindFirstValue("AccountId");
-                if (!int.TryParse(value, out var accountId)) return Unauthorized();
-                var member = _memberAccounts.GetMemberForAccount(accountId);
+                var accountId = User.GetAccountId();
+                if (accountId == null) return Unauthorized();
+                var member = _memberAccounts.GetMemberForAccount(accountId.Value);
                 if (member == null)
                     return Conflict(new { message = "This account is not linked to a member profile." });
                 req.MemberId = member.MemberId;

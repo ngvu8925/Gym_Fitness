@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using GymManagement.Api.Common;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -23,9 +23,10 @@ namespace GymManagement.Api.Controllers
         [HttpGet("me")]
         public IActionResult Me()
         {
-            if (!TryGetAccountId(out var accountId)) return Unauthorized();
+            var accountId = User.GetAccountId();
+            if (accountId == null) return Unauthorized();
 
-            var member = _memberAccounts.GetMemberForAccount(accountId);
+            var member = _memberAccounts.GetMemberForAccount(accountId.Value);
             if (member == null)
                 return Conflict(new { message = "This account is not linked to a member profile. Please contact the administrator." });
 
@@ -50,8 +51,9 @@ namespace GymManagement.Api.Controllers
         [HttpPut("me")]
         public IActionResult UpdateMyProfile([FromBody] MemberRequest request)
         {
-            if (!TryGetAccountId(out var accountId)) return Unauthorized();
-            var member = _memberAccounts.GetMemberForAccount(accountId);
+            var accountId = User.GetAccountId();
+            if (accountId == null) return Unauthorized();
+            var member = _memberAccounts.GetMemberForAccount(accountId.Value);
             if (member == null)
                 return Conflict(new { message = "This account is not linked to a member profile." });
 
@@ -59,13 +61,6 @@ namespace GymManagement.Api.Controllers
             var (success, message) = _members.Update(member.MemberId, request);
             if (!success) return BadRequest(new { message });
             return Ok(new { message });
-        }
-
-        private bool TryGetAccountId(out int accountId)
-        {
-            var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? User.FindFirstValue("AccountId");
-            return int.TryParse(value, out accountId);
         }
     }
 }
