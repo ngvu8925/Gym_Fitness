@@ -12,6 +12,11 @@
     <DockerfileContext>.</DockerfileContext>
   </PropertyGroup>
 
+  <!-- Project test nằm trong thư mục này nhưng KHÔNG biên dịch vào API -->
+  <ItemGroup>
+    <Compile Remove="GymManagement.Api.Tests/**/*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ContainerPort Include="8081" />
   </ItemGroup>
