@@ -26,6 +26,10 @@ namespace GymManagement.Api.Services
             {
                 return BCrypt.Net.BCrypt.Verify(plainPassword, storedHash);
             }
+            catch (BCrypt.Net.SaltParseException)
+            {
+                return false;
+            }
             catch (BCrypt.Net.HashInformationException)
             {
                 return false;

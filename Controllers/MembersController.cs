@@ -9,10 +9,10 @@ namespace GymManagement.Api.Controllers
     [Route("api/members")]
     public class MembersController : ControllerBase
     {
-        private readonly MemberService _service;
-        private readonly MemberAccountService _memberAccounts;
+        private readonly IMemberService _service;
+        private readonly IMemberAccountService _memberAccounts;
 
-        public MembersController(MemberService service, MemberAccountService memberAccounts)
+        public MembersController(IMemberService service, IMemberAccountService memberAccounts)
         {
             _service = service;
             _memberAccounts = memberAccounts;

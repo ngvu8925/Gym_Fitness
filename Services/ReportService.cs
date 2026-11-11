@@ -3,11 +3,11 @@ using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
 {
-    public class ReportService
+    public class ReportService : IReportService
     {
-        private readonly ReportRepository _repo;
+        private readonly IReportRepository _repo;
 
-        public ReportService(ReportRepository repo) => _repo = repo;
+        public ReportService(IReportRepository repo) => _repo = repo;
 
         public List<ReportItem> MonthlyRevenue(int year, int month) => Map(_repo.MonthlyRevenue(year, month));
 

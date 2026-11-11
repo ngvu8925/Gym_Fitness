@@ -9,9 +9,9 @@ namespace GymManagement.Api.Controllers
     [Authorize(Roles = "Admin")]
     public class MemberAccountsController : ControllerBase
     {
-        private readonly MemberAccountService _service;
+        private readonly IMemberAccountService _service;
 
-        public MemberAccountsController(MemberAccountService service) => _service = service;
+        public MemberAccountsController(IMemberAccountService service) => _service = service;
 
         [HttpGet("member-options")]
         public IActionResult MemberOptions() => Ok(_service.MemberOptions());

@@ -3,11 +3,11 @@ using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
 {
-    public class PackageService
+    public class PackageService : IPackageService
     {
-        private readonly PackageRepository _repo;
+        private readonly IPackageRepository _repo;
 
-        public PackageService(PackageRepository repo) => _repo = repo;
+        public PackageService(IPackageRepository repo) => _repo = repo;
 
         public List<PackageListItem> List()
         {

@@ -9,9 +9,9 @@ namespace GymManagement.Api.Controllers
     [Route("api/trainers")]
     public class TrainersController : ControllerBase
     {
-        private readonly TrainerService _service;
+        private readonly ITrainerService _service;
 
-        public TrainersController(TrainerService service) => _service = service;
+        public TrainersController(ITrainerService service) => _service = service;
 
         [HttpGet]
         public IActionResult List() => Ok(_service.List());

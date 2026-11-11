@@ -2,11 +2,11 @@ using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
 {
-    public class AttendanceService
+    public class AttendanceService : IAttendanceService
     {
-        private readonly AttendanceRepository _repo;
+        private readonly IAttendanceRepository _repo;
 
-        public AttendanceService(AttendanceRepository repo) => _repo = repo;
+        public AttendanceService(IAttendanceRepository repo) => _repo = repo;
 
         public (bool Success, string Message) CheckIn(int memberId)
         {

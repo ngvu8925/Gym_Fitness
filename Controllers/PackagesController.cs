@@ -9,9 +9,9 @@ namespace GymManagement.Api.Controllers
     [Route("api/packages")]
     public class PackagesController : ControllerBase
     {
-        private readonly PackageService _service;
+        private readonly IPackageService _service;
 
-        public PackagesController(PackageService service) => _service = service;
+        public PackagesController(IPackageService service) => _service = service;
 
         [HttpGet]
         public IActionResult List() => Ok(_service.List());

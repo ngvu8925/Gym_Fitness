@@ -4,7 +4,7 @@ using Microsoft.Data.SqlClient;
 
 namespace GymManagement.Api.Repositories
 {
-    public class GymClassRepository
+    public class GymClassRepository : IGymClassRepository
     {
         private readonly DatabaseHelper _db;
 

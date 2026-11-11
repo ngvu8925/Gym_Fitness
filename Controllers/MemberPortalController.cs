@@ -11,10 +11,10 @@ namespace GymManagement.Api.Controllers
     [Authorize(Roles = "Member")]
     public class MemberPortalController : ControllerBase
     {
-        private readonly MemberAccountService _memberAccounts;
-        private readonly MemberService _members;
+        private readonly IMemberAccountService _memberAccounts;
+        private readonly IMemberService _members;
 
-        public MemberPortalController(MemberAccountService memberAccounts, MemberService members)
+        public MemberPortalController(IMemberAccountService memberAccounts, IMemberService members)
         {
             _memberAccounts = memberAccounts;
             _members = members;

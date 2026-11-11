@@ -4,11 +4,11 @@ using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
 {
-    public class AccountService
+    public class AccountService : IAccountService
     {
-        private readonly AccountRepository _repo;
+        private readonly IAccountRepository _repo;
 
-        public AccountService(AccountRepository repo) => _repo = repo;
+        public AccountService(IAccountRepository repo) => _repo = repo;
 
         public (bool Success, string Message, LoginResult? Account) Login(string username, string password)
         {

@@ -5,11 +5,11 @@ using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
 {
-    public class MemberAccountService
+    public class MemberAccountService : IMemberAccountService
     {
-        private readonly MemberAccountRepository _repo;
+        private readonly IMemberAccountRepository _repo;
 
-        public MemberAccountService(MemberAccountRepository repo) => _repo = repo;
+        public MemberAccountService(IMemberAccountRepository repo) => _repo = repo;
 
         public Member? GetMemberForAccount(int accountId)
         {

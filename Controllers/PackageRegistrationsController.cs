@@ -10,10 +10,10 @@ namespace GymManagement.Api.Controllers
     [Route("api/package-registrations")]
     public class PackageRegistrationsController : ControllerBase
     {
-        private readonly PackageService _service;
-        private readonly MemberAccountService _memberAccounts;
+        private readonly IPackageService _service;
+        private readonly IMemberAccountService _memberAccounts;
 
-        public PackageRegistrationsController(PackageService service, MemberAccountService memberAccounts)
+        public PackageRegistrationsController(IPackageService service, IMemberAccountService memberAccounts)
         {
             _service = service;
             _memberAccounts = memberAccounts;

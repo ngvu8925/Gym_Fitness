@@ -58,28 +58,23 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<GymManagement.Api.Repositories.DatabaseHelper>();
 
-builder.Services.AddScoped<GymManagement.Api.Repositories.MemberAccountRepository>();
-builder.Services.AddScoped<GymManagement.Api.Repositories.MemberRepository>();
-builder.Services.AddScoped<GymManagement.Api.Services.MemberService>();
-builder.Services.AddScoped<GymManagement.Api.Services.MemberAccountService>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.IMemberAccountRepository, GymManagement.Api.Repositories.MemberAccountRepository>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.IMemberRepository, GymManagement.Api.Repositories.MemberRepository>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.IPackageRepository, GymManagement.Api.Repositories.PackageRepository>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.IGymClassRepository, GymManagement.Api.Repositories.GymClassRepository>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.ITrainerRepository, GymManagement.Api.Repositories.TrainerRepository>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.IAttendanceRepository, GymManagement.Api.Repositories.AttendanceRepository>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.IReportRepository, GymManagement.Api.Repositories.ReportRepository>();
+builder.Services.AddScoped<GymManagement.Api.Repositories.IAccountRepository, GymManagement.Api.Repositories.AccountRepository>();
 
-builder.Services.AddScoped<GymManagement.Api.Repositories.PackageRepository>();
-builder.Services.AddScoped<GymManagement.Api.Services.PackageService>();
-
-builder.Services.AddScoped<GymManagement.Api.Repositories.GymClassRepository>();
-builder.Services.AddScoped<GymManagement.Api.Services.GymClassService>();
-
-builder.Services.AddScoped<GymManagement.Api.Repositories.TrainerRepository>();
-builder.Services.AddScoped<GymManagement.Api.Services.TrainerService>();
-
-builder.Services.AddScoped<GymManagement.Api.Repositories.AttendanceRepository>();
-builder.Services.AddScoped<GymManagement.Api.Services.AttendanceService>();
-
-builder.Services.AddScoped<GymManagement.Api.Repositories.ReportRepository>();
-builder.Services.AddScoped<GymManagement.Api.Services.ReportService>();
-
-builder.Services.AddScoped<GymManagement.Api.Repositories.AccountRepository>();
-builder.Services.AddScoped<GymManagement.Api.Services.AccountService>();
+builder.Services.AddScoped<GymManagement.Api.Services.IMemberService, GymManagement.Api.Services.MemberService>();
+builder.Services.AddScoped<GymManagement.Api.Services.IMemberAccountService, GymManagement.Api.Services.MemberAccountService>();
+builder.Services.AddScoped<GymManagement.Api.Services.IPackageService, GymManagement.Api.Services.PackageService>();
+builder.Services.AddScoped<GymManagement.Api.Services.IGymClassService, GymManagement.Api.Services.GymClassService>();
+builder.Services.AddScoped<GymManagement.Api.Services.ITrainerService, GymManagement.Api.Services.TrainerService>();
+builder.Services.AddScoped<GymManagement.Api.Services.IAttendanceService, GymManagement.Api.Services.AttendanceService>();
+builder.Services.AddScoped<GymManagement.Api.Services.IReportService, GymManagement.Api.Services.ReportService>();
+builder.Services.AddScoped<GymManagement.Api.Services.IAccountService, GymManagement.Api.Services.AccountService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

@@ -9,9 +9,9 @@ namespace GymManagement.Api.Controllers
     [Authorize(Roles = "Admin")]
     public class ReportsController : ControllerBase
     {
-        private readonly ReportService _service;
+        private readonly IReportService _service;
 
-        public ReportsController(ReportService service) => _service = service;
+        public ReportsController(IReportService service) => _service = service;
 
         [HttpGet("monthly-revenue")]
         public IActionResult MonthlyRevenue([FromQuery] int year, [FromQuery] int month)

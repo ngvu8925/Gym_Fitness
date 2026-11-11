@@ -4,11 +4,11 @@ using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
 {
-    public class MemberService
+    public class MemberService : IMemberService
     {
-        private readonly MemberRepository _repo;
+        private readonly IMemberRepository _repo;
 
-        public MemberService(MemberRepository repo) => _repo = repo;
+        public MemberService(IMemberRepository repo) => _repo = repo;
 
         public (bool Success, string Message, int MemberId) Add(MemberRequest member)
         {

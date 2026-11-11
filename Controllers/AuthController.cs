@@ -8,10 +8,10 @@ namespace GymManagement.Api.Controllers
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly AccountService _service;
+        private readonly IAccountService _service;
         private readonly JwtService _jwtService;
 
-        public AuthController(AccountService service, JwtService jwtService)
+        public AuthController(IAccountService service, JwtService jwtService)
         {
             _service = service;
             _jwtService = jwtService;
