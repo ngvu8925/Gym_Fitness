@@ -35,9 +35,14 @@ namespace GymManagement.Api.Repositories
 
         public int ExecuteNonQuery(string spName, params SqlParameter[] parameters)
         {
+            return ExecuteNonQuery(spName, parameters, isStoredProcedure: true);
+        }
+
+        public int ExecuteNonQuery(string sql, SqlParameter[] parameters, bool isStoredProcedure)
+        {
             using var conn = new SqlConnection(_connString);
-            using var cmd = new SqlCommand(spName, conn);
-            cmd.CommandType = CommandType.StoredProcedure;
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.CommandType = isStoredProcedure ? CommandType.StoredProcedure : CommandType.Text;
             if (parameters != null) cmd.Parameters.AddRange(parameters);
 
             conn.Open();

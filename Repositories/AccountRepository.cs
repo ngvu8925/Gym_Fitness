@@ -35,8 +35,8 @@ namespace GymManagement.Api.Repositories
                 WHERE AccountId = @AccountId;";
 
             _db.ExecuteNonQuery(sql,
-                new SqlParameter("@AccountId", accountId),
-                new SqlParameter("@Password", passwordHash));
+                new SqlParameter[] { new SqlParameter("@AccountId", accountId), new SqlParameter("@Password", passwordHash) },
+                isStoredProcedure: false);
         }
 
         public bool UsernameExists(string username)
