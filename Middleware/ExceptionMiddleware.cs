@@ -6,10 +6,14 @@ namespace GymManagement.Api.Middleware
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<ExceptionMiddleware> _logger;
+        private readonly IHostEnvironment _env;
 
-        public ExceptionMiddleware(RequestDelegate next)
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger, IHostEnvironment env)
         {
             _next = next;
+            _logger = logger;
+            _env = env;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -20,14 +24,18 @@ namespace GymManagement.Api.Middleware
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled exception khi xử lý {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
+
                 context.Response.ContentType = "application/json";
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                var result = JsonSerializer.Serialize(new
-                {
-                    message = "A system error occurred: " + ex.Message
-                });
+                // Chi tiết lỗi chỉ trả về trong Development; production trả message chung.
+                var message = _env.IsDevelopment()
+                    ? "A system error occurred: " + ex.Message
+                    : "An unexpected error occurred. Please try again later.";
 
+                var result = JsonSerializer.Serialize(new { message });
                 await context.Response.WriteAsync(result);
             }
         }
