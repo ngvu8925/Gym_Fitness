@@ -53,11 +53,19 @@ namespace GymManagement.Api.Repositories
             _db.ExecuteNonQuery("sp_Member_Delete", new SqlParameter("@MemberId", memberId));
         }
 
-        public DataTable Search(string? keyword)
+        public DataTable Search(string? keyword, DTOs.Common.UserQueryParameters query)
         {
             string? search = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
-            return _db.ExecuteQuery("sp_Member_Search",
-                new SqlParameter("@Keyword", (object?)search ?? DBNull.Value));
+            var ps = new SqlParameter[]
+            {
+                new("@Keyword", (object?)search ?? DBNull.Value),
+                new("@Page", query.Page),
+                new("@PageSize", query.PageSize),
+                new("@SortDir", query.IsDescending ? "DESC" : "ASC")
+            };
+            return PagedQuery.Execute(_db, "sp_Member_Search", ps,
+                legacyCall: () => _db.ExecuteQuery("sp_Member_Search",
+                    new SqlParameter("@Keyword", (object?)search ?? DBNull.Value)));
         }
     }
 }

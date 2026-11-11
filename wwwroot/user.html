@@ -1325,12 +1325,12 @@
         }
 
         async function loadPackages() {
-            const data = await api('GET', '/api/packages');
+            const data = await api('GET', '/api/packages?pageSize=100');
             if (!data) return;
-            packagesData = data;
+            packagesData = data.items || [];
             const container = document.getElementById('packagesListContainer');
             
-            container.innerHTML = data.map((pkg, idx) => {
+            container.innerHTML = packagesData.map((pkg, idx) => {
                 const isFeatured = idx === 1 || pkg.months >= 6;
                 const priceFormatted = Number(pkg.price || pkg.unitPrice || 0).toLocaleString('vi-VN');
                 return `
@@ -1351,12 +1351,12 @@
         }
 
         async function loadClasses() {
-            const data = await api('GET', '/api/classes');
+            const data = await api('GET', '/api/classes?pageSize=100');
             if (!data) return;
-            classesData = data;
+            classesData = data.items || [];
             const container = document.getElementById('classesListContainer');
 
-            container.innerHTML = data.map(c => {
+            container.innerHTML = classesData.map(c => {
                 const days = c.daysOfWeek ? formatDays(c.daysOfWeek) : 'Linh hoạt';
                 const time = c.startTime ? formatTimeSpan(c.startTime) + ' - ' + formatTimeSpan(c.endTime) : '';
                 const schedule = time ? days + ' · ' + time : days;
@@ -1389,11 +1389,11 @@
         }
 
         async function loadTrainers() {
-            const data = await api('GET', '/api/trainers');
+            const data = await api('GET', '/api/trainers?pageSize=100');
             if (!data) return;
             const container = document.getElementById('trainersListContainer');
 
-            container.innerHTML = data.map(t => `
+            container.innerHTML = (data.items || []).map(t => `
                 <div class="trainer-card">
                     <div class="trainer-avatar">🏋️</div>
                     <div class="trainer-info">

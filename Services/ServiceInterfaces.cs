@@ -1,4 +1,5 @@
 using GymManagement.Api.DTOs;
+using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Models;
 using GymManagement.Api.Repositories;
 
@@ -10,12 +11,12 @@ namespace GymManagement.Api.Services
         (bool Success, string Message) Update(int memberId, MemberRequest member);
         void Delete(int memberId);
         MemberListItem? GetById(int memberId);
-        List<MemberListItem> Search(string? keyword);
+        PageResult<MemberListItem> Search(string? keyword, UserQueryParameters query);
     }
 
     public interface IPackageService
     {
-        List<PackageListItem> List();
+        PageResult<PackageListItem> List(UserQueryParameters query);
         (bool Success, string Message) Add(PackageRequest req);
         (bool Success, string Message) Update(int packageId, PackageRequest req);
         void Delete(int packageId);
@@ -27,7 +28,7 @@ namespace GymManagement.Api.Services
 
     public interface IGymClassService
     {
-        List<ClassListItem> List();
+        PageResult<ClassListItem> List(UserQueryParameters query);
         (bool Success, string Message, int ClassId) Add(GymClassRequest req);
         (bool Success, string Message) Update(int classId, GymClassRequest req);
         void Delete(int classId);
@@ -36,7 +37,7 @@ namespace GymManagement.Api.Services
 
     public interface ITrainerService
     {
-        List<TrainerListItem> List();
+        PageResult<TrainerListItem> List(UserQueryParameters query);
         (bool Success, string Message, int TrainerId) Add(TrainerRequest req);
         (bool Success, string Message) Update(int trainerId, TrainerRequest req);
         void Delete(int trainerId);

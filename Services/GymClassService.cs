@@ -1,4 +1,5 @@
 using GymManagement.Api.DTOs;
+using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
@@ -9,10 +10,10 @@ namespace GymManagement.Api.Services
 
         public GymClassService(IGymClassRepository repo) => _repo = repo;
 
-        public List<ClassListItem> List()
+        public PageResult<ClassListItem> List(UserQueryParameters query)
         {
-            var dt = _repo.List();
-            return DtoMapper.MapList(dt, row => new ClassListItem
+            var dt = _repo.List(query);
+            var items = DtoMapper.MapList(dt, row => new ClassListItem
             {
                 ClassId = DtoMapper.GetInt(row, "ClassId", "MaLop"),
                 BranchId = DtoMapper.GetNullableInt(row, "BranchId", "MaCN"),
@@ -25,6 +26,23 @@ namespace GymManagement.Api.Services
                 StartTime = GetTimeSpan(row, "StartTime"),
                 EndTime = GetTimeSpan(row, "EndTime")
             });
+
+            // SP đã phân trang ở DB (có cột TotalCount)
+            if (dt.Columns.Contains("TotalCount") && dt.Rows.Count > 0)
+                return PageResult<ClassListItem>.Of(items, Convert.ToInt32(dt.Rows[0]["TotalCount"]), query);
+
+            // Fallback: SP cũ trả toàn bộ => lọc + cắt tại bộ nhớ
+            var search = query.NormalizedKeyword;
+            if (search != null)
+            {
+                items = items.Where(c =>
+                    c.ClassName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    (c.TrainerName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+            }
+            var sorted = query.IsDescending
+                ? items.OrderByDescending(c => c.ClassName).ToList()
+                : items.OrderBy(c => c.ClassName).ToList();
+            return PageResult<ClassListItem>.FromList(sorted, query);
         }
 
         private static TimeSpan? GetTimeSpan(System.Data.DataRow row, string column)

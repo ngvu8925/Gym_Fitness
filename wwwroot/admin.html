@@ -665,14 +665,14 @@ document.getElementById('tabNav').addEventListener('click', (e) => {
 
 async function loadOverview() {
           const stats = document.querySelectorAll('#overviewStats .stat .num');
-          const members = await api('GET', '/api/members?keyword=');
-          if (members) stats[0].textContent = members.length;
+          const members = await api('GET', '/api/members?pageSize=100');
+          if (members) stats[0].textContent = members.totalCount;
 
-          const packages = await api('GET', '/api/packages');
-          if (packages) stats[1].textContent = packages.length;
+          const packages = await api('GET', '/api/packages?pageSize=100');
+          if (packages) stats[1].textContent = packages.totalCount;
 
-          const classes = await api('GET', '/api/classes');
-          if (classes) stats[2].textContent = classes.length;
+          const classes = await api('GET', '/api/classes?pageSize=100');
+          if (classes) stats[2].textContent = classes.totalCount;
 
           const now = new Date();
           const dt = await api('GET', '/api/reports/monthly-revenue?year=' + now.getFullYear() + '&month=' + (now.getMonth() + 1));
@@ -791,10 +791,10 @@ async function deactivateMember(memberId) {
 
 async function loadMembers() {
           const keyword = document.getElementById('memberKeyword').value;
-          const data = await api('GET', '/api/members?keyword=' + encodeURIComponent(keyword));
+          const data = await api('GET', '/api/members?pageSize=100&keyword=' + encodeURIComponent(keyword));
           if (data) {
-            adminMembers = data;
-            renderMembersTable(data);
+            adminMembers = data.items || [];
+            renderMembersTable(adminMembers);
             populateMemberLinkOptions();
           }
 }
@@ -890,8 +890,8 @@ async function addPackage() {
 }
 
 async function loadPackages() {
-          const data = await api('GET', '/api/packages');
-          if (data) renderTable('packageTable', data, [
+          const data = await api('GET', '/api/packages?pageSize=100');
+          if (data) renderTable('packageTable', data.items, [
             { key: 'packageId', label: 'ID' }, { key: 'packageName', label: 'Name' },
             { key: 'packageType', label: 'Type' }, { key: 'months', label: 'Months' },
             { key: 'price', label: 'Price' }
@@ -924,8 +924,8 @@ async function addTrainer() {
 }
 
 async function loadTrainers() {
-          const data = await api('GET', '/api/trainers');
-          if (data) renderTable('trainerTable', data, [
+          const data = await api('GET', '/api/trainers?pageSize=100');
+          if (data) renderTable('trainerTable', data.items, [
             { key: 'trainerId', label: 'ID' }, { key: 'fullName', label: 'Full name' },
             { key: 'specialty', label: 'Specialty' }, { key: 'phone', label: 'Phone' }
           ], 'No trainers yet. Add one using the form above.');
@@ -963,8 +963,8 @@ function formatSchedule(c) {
 }
 
 async function loadClasses() {
-          const data = await api('GET', '/api/classes');
-          if (data) renderTable('classTable', data.map(c => ({ ...c, schedule: formatSchedule(c) })), [
+          const data = await api('GET', '/api/classes?pageSize=100');
+          if (data) renderTable('classTable', (data.items || []).map(c => ({ ...c, schedule: formatSchedule(c) })), [
             { key: 'classId', label: 'ID' }, { key: 'className', label: 'Class' },
             { key: 'trainerName', label: 'Trainer' }, { key: 'capacity', label: 'Capacity' },
             { key: 'schedule', label: 'Schedule' }

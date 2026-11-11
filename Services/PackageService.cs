@@ -1,4 +1,5 @@
 using GymManagement.Api.DTOs;
+using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
@@ -9,10 +10,10 @@ namespace GymManagement.Api.Services
 
         public PackageService(IPackageRepository repo) => _repo = repo;
 
-        public List<PackageListItem> List()
+        public PageResult<PackageListItem> List(UserQueryParameters query)
         {
-            var dt = _repo.List();
-            return DtoMapper.MapList(dt, row => new PackageListItem
+            var dt = _repo.List(query);
+            var items = DtoMapper.MapList(dt, row => new PackageListItem
             {
                 PackageId = DtoMapper.GetInt(row, "PackageId", "MaGoi"),
                 PackageName = DtoMapper.GetString(row, "PackageName", "TenGoi") ?? string.Empty,
@@ -22,6 +23,23 @@ namespace GymManagement.Api.Services
                 Description = DtoMapper.GetString(row, "Description", "MoTa"),
                 Status = DtoMapper.GetNullableBool(row, "Status", "TrangThai")
             });
+
+            // SP đã phân trang ở DB (có cột TotalCount)
+            if (dt.Columns.Contains("TotalCount") && dt.Rows.Count > 0)
+                return PageResult<PackageListItem>.Of(items, Convert.ToInt32(dt.Rows[0]["TotalCount"]), query);
+
+            // Fallback: SP cũ trả toàn bộ => lọc + cắt tại bộ nhớ
+            var search = query.NormalizedKeyword;
+            if (search != null)
+            {
+                items = items.Where(p =>
+                    p.PackageName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    (p.PackageType?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+            }
+            var sorted = query.IsDescending
+                ? items.OrderByDescending(p => p.PackageName).ToList()
+                : items.OrderBy(p => p.PackageName).ToList();
+            return PageResult<PackageListItem>.FromList(sorted, query);
         }
 
         public (bool Success, string Message) Add(PackageRequest req)

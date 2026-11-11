@@ -1,4 +1,5 @@
 using GymManagement.Api.DTOs;
+using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,7 @@ namespace GymManagement.Api.Controllers
         public TrainersController(ITrainerService service) => _service = service;
 
         [HttpGet]
-        public IActionResult List() => Ok(_service.List());
+        public IActionResult List([FromQuery] UserQueryParameters query) => Ok(_service.List(query));
 
         [HttpPost]
         [Authorize(Roles = "Admin")]

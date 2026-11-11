@@ -1,5 +1,6 @@
 using System.Data;
 using GymManagement.Api.DTOs;
+using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Models;
 
 namespace GymManagement.Api.Repositories
@@ -9,13 +10,13 @@ namespace GymManagement.Api.Repositories
         int Add(MemberRequest member);
         void Update(int memberId, MemberRequest member);
         void Delete(int memberId);
-        DataTable Search(string? keyword);
+        DataTable Search(string? keyword, UserQueryParameters query);
         DataTable GetById(int memberId);
     }
 
     public interface IPackageRepository
     {
-        DataTable List();
+        DataTable List(UserQueryParameters query);
         void Add(PackageRequest req);
         void Update(int packageId, PackageRequest req);
         void Delete(int packageId);
@@ -27,7 +28,7 @@ namespace GymManagement.Api.Repositories
 
     public interface IGymClassRepository
     {
-        DataTable List();
+        DataTable List(UserQueryParameters query);
         int Add(GymClassRequest req);
         void Update(int classId, GymClassRequest req);
         void Delete(int classId);
@@ -36,7 +37,7 @@ namespace GymManagement.Api.Repositories
 
     public interface ITrainerRepository
     {
-        DataTable List();
+        DataTable List(UserQueryParameters query);
         int Add(TrainerRequest req);
         void Update(int trainerId, TrainerRequest req);
         void Delete(int trainerId);

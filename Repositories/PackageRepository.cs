@@ -10,7 +10,18 @@ namespace GymManagement.Api.Repositories
 
         public PackageRepository(DatabaseHelper db) => _db = db;
 
-        public DataTable List() => _db.ExecuteQuery("sp_MembershipPackage_GetAll");
+        public DataTable List(DTOs.Common.UserQueryParameters query)
+        {
+            var ps = new SqlParameter[]
+            {
+                new("@Keyword", query.NormalizedKeyword ?? (object)DBNull.Value),
+                new("@Page", query.Page),
+                new("@PageSize", query.PageSize),
+                new("@SortDir", query.IsDescending ? "DESC" : "ASC")
+            };
+            return PagedQuery.Execute(_db, "sp_MembershipPackage_GetAll", ps,
+                legacyCall: () => _db.ExecuteQuery("sp_MembershipPackage_GetAll"));
+        }
 
         public void Add(PackageRequest req)
         {

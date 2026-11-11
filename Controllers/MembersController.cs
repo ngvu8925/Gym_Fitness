@@ -1,4 +1,5 @@
 using GymManagement.Api.DTOs;
+using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace GymManagement.Api.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public IActionResult Search([FromQuery] string? keyword) => Ok(_service.Search(keyword));
+        public IActionResult Search([FromQuery] UserQueryParameters query) => Ok(_service.Search(query.Keyword, query));
 
         [HttpGet("{memberId}")]
         [Authorize(Roles = "Admin")]

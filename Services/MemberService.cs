@@ -1,5 +1,6 @@
 using System.Data;
 using GymManagement.Api.DTOs;
+using GymManagement.Api.DTOs.Common;
 using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
@@ -45,10 +46,27 @@ namespace GymManagement.Api.Services
             return dt.Rows.Count == 0 ? null : MapMember(dt.Rows[0]);
         }
 
-        public List<MemberListItem> Search(string? keyword)
+        public PageResult<MemberListItem> Search(string? keyword, UserQueryParameters query)
         {
-            var dt = _repo.Search(keyword);
-            return DtoMapper.MapList(dt, MapMember);
+            var dt = _repo.Search(keyword, query);
+            var items = DtoMapper.MapList(dt, MapMember);
+
+            // SP đã phân trang ở DB (có cột TotalCount)
+            if (dt.Columns.Contains("TotalCount") && dt.Rows.Count > 0)
+                return PageResult<MemberListItem>.Of(items, Convert.ToInt32(dt.Rows[0]["TotalCount"]), query);
+
+            // Fallback: SP cũ trả toàn bộ => lọc + cắt tại bộ nhớ
+            var search = query.NormalizedKeyword;
+            if (search != null)
+            {
+                items = items.Where(m =>
+                    m.FullName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    (m.Phone?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+            }
+            var sorted = query.IsDescending
+                ? items.OrderByDescending(m => m.FullName).ToList()
+                : items.OrderBy(m => m.FullName).ToList();
+            return PageResult<MemberListItem>.FromList(sorted, query);
         }
 
         private static MemberListItem MapMember(DataRow row) => new()
