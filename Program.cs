@@ -1,10 +1,8 @@
 using System.Text;
-using GymManagement.Api.Data;
 using GymManagement.Api.Middleware;
 using GymManagement.Api.Models;
 using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Microsoft.OpenApi;
@@ -19,8 +17,6 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "Connection string 'DefaultConnection' chưa được cấu hình. " +
         "Đặt trong user secrets: dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"<value>\"");
 }
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-
 // Bind & register JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<JwtService>();
@@ -62,6 +58,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<GymManagement.Api.Repositories.DatabaseHelper>();
 
+builder.Services.AddScoped<GymManagement.Api.Repositories.MemberAccountRepository>();
 builder.Services.AddScoped<GymManagement.Api.Repositories.MemberRepository>();
 builder.Services.AddScoped<GymManagement.Api.Services.MemberService>();
 builder.Services.AddScoped<GymManagement.Api.Services.MemberAccountService>();

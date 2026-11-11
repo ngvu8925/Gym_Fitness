@@ -1,10 +1,9 @@
+using System.Data;
 using System.Security.Claims;
-using GymManagement.Api.Data;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymManagement.Api.Controllers
 {
@@ -13,48 +12,48 @@ namespace GymManagement.Api.Controllers
     [Authorize(Roles = "Member")]
     public class MemberPortalController : ControllerBase
     {
-        private readonly AppDbContext _db;
         private readonly MemberAccountService _memberAccounts;
         private readonly MemberService _members;
 
-        public MemberPortalController(AppDbContext db, MemberAccountService memberAccounts, MemberService members)
+        public MemberPortalController(MemberAccountService memberAccounts, MemberService members)
         {
-            _db = db;
             _memberAccounts = memberAccounts;
             _members = members;
         }
 
         [HttpGet("me")]
-        public async Task<IActionResult> Me()
+        public IActionResult Me()
         {
             if (!TryGetAccountId(out var accountId)) return Unauthorized();
 
-            var member = await _memberAccounts.GetMemberForAccountAsync(accountId);
+            var member = _memberAccounts.GetMemberForAccount(accountId);
             if (member == null)
                 return Conflict(new { message = "This account is not linked to a member profile. Please contact the administrator." });
 
-            var registrations = await (
-                from registration in _db.PackageRegistrations.AsNoTracking()
-                join package in _db.MembershipPackages.AsNoTracking()
-                    on registration.PackageId equals package.PackageId
-                where registration.MemberId == member.MemberId
-                orderby registration.StartDate descending, registration.RegistrationId descending
-                select new
+            var registrations = _memberAccounts.GetMyRegistrations(member.MemberId);
+
+            var packages = new List<object>();
+            foreach (DataRow row in registrations.Rows)
+            {
+                decimal listPrice = row["UnitPrice"] == DBNull.Value ? 0 : Convert.ToDecimal(row["UnitPrice"]);
+                decimal discount = row["DiscountAmount"] == DBNull.Value ? 0 : Convert.ToDecimal(row["DiscountAmount"]);
+                decimal paidPrice = listPrice > discount ? listPrice - discount : 0;
+
+                packages.Add(new
                 {
-                    registrationId = registration.RegistrationId,
-                    packageId = package.PackageId,
-                    packageName = package.Name,
-                    packageType = package.Type,
-                    months = package.Months,
-                    listPrice = package.Price,
-                    discountAmount = registration.DiscountAmount,
-                    paidPrice = package.Price > registration.DiscountAmount
-                        ? package.Price - registration.DiscountAmount
-                        : 0,
-                    startDate = registration.StartDate,
-                    endDate = registration.EndDate,
-                    status = registration.Status
-                }).ToListAsync();
+                    registrationId = Convert.ToInt32(row["RegistrationId"]),
+                    packageId = Convert.ToInt32(row["PackageId"]),
+                    packageName = row["PackageName"]?.ToString(),
+                    packageType = row["PackageType"]?.ToString(),
+                    months = row["DurationInMonths"] == DBNull.Value ? 0 : Convert.ToInt32(row["DurationInMonths"]),
+                    listPrice,
+                    discountAmount = discount,
+                    paidPrice,
+                    startDate = row["StartDate"],
+                    endDate = row["EndDate"],
+                    status = row["Status"]?.ToString()
+                });
+            }
 
             return Ok(new
             {
@@ -70,15 +69,15 @@ namespace GymManagement.Api.Controllers
                     member.Address,
                     member.Status
                 },
-                packages = registrations
+                packages
             });
         }
 
         [HttpPut("me")]
-        public async Task<IActionResult> UpdateMyProfile([FromBody] MemberRequest request)
+        public IActionResult UpdateMyProfile([FromBody] MemberRequest request)
         {
             if (!TryGetAccountId(out var accountId)) return Unauthorized();
-            var member = await _memberAccounts.GetMemberForAccountAsync(accountId);
+            var member = _memberAccounts.GetMemberForAccount(accountId);
             if (member == null)
                 return Conflict(new { message = "This account is not linked to a member profile." });
 

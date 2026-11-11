@@ -33,13 +33,13 @@ namespace GymManagement.Api.Controllers
 
         [HttpPost("enroll")]
         [Authorize]
-        public async Task<IActionResult> Enroll([FromBody] ClassEnrollmentRequest req)
+        public IActionResult Enroll([FromBody] ClassEnrollmentRequest req)
         {
             if (User.IsInRole("Member"))
             {
                 var accountId = GetAccountId();
                 if (!accountId.HasValue) return Unauthorized();
-                var member = await _memberAccounts.GetMemberForAccountAsync(accountId.Value);
+                var member = _memberAccounts.GetMemberForAccount(accountId.Value);
                 if (member == null)
                     return Conflict(new { message = "This account is not linked to a member profile." });
                 req.MemberId = member.MemberId;

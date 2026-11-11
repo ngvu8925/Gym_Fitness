@@ -21,13 +21,13 @@ namespace GymManagement.Api.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Register([FromBody] PackageRegistrationRequest req)
+        public IActionResult Register([FromBody] PackageRegistrationRequest req)
         {
             if (!TryGetAccountId(out var accountId)) return Unauthorized();
 
             if (User.IsInRole("Member"))
             {
-                var member = await _memberAccounts.GetMemberForAccountAsync(accountId);
+                var member = _memberAccounts.GetMemberForAccount(accountId);
                 if (member == null)
                     return Conflict(new { message = "This account is not linked to a member profile." });
 

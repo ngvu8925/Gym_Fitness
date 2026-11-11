@@ -21,14 +21,14 @@ namespace GymManagement.Api.Controllers
 
         [HttpPost("checkin")]
         [Authorize]
-        public async Task<IActionResult> CheckIn([FromBody] CheckInRequest req)
+        public IActionResult CheckIn([FromBody] CheckInRequest req)
         {
             if (User.IsInRole("Member"))
             {
                 var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
                     ?? User.FindFirstValue("AccountId");
                 if (!int.TryParse(value, out var accountId)) return Unauthorized();
-                var member = await _memberAccounts.GetMemberForAccountAsync(accountId);
+                var member = _memberAccounts.GetMemberForAccount(accountId);
                 if (member == null)
                     return Conflict(new { message = "This account is not linked to a member profile." });
                 req.MemberId = member.MemberId;

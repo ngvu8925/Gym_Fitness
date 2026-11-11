@@ -1,7 +1,6 @@
-using GymManagement.Api.Data;
+using GymManagement.Api.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GymManagement.Api.Controllers
 {
@@ -10,31 +9,11 @@ namespace GymManagement.Api.Controllers
     [Authorize(Roles = "Admin")]
     public class MemberAccountsController : ControllerBase
     {
-        private readonly AppDbContext _db;
+        private readonly MemberAccountRepository _repo;
 
-        public MemberAccountsController(AppDbContext db) => _db = db;
+        public MemberAccountsController(MemberAccountRepository repo) => _repo = repo;
 
         [HttpGet("member-options")]
-        public async Task<IActionResult> MemberOptions()
-        {
-            var accounts = await _db.Accounts.AsNoTracking()
-                .Where(account => account.Role.ToLower() == "member")
-                .OrderBy(account => account.FullName)
-                .Select(account => new
-                {
-                    accountId = account.AccountId,
-                    username = account.Username,
-                    fullName = account.FullName,
-                    phone = account.Phone,
-                    email = account.Email,
-                    memberId = _db.Members
-                        .Where(member => member.AccountId == account.AccountId)
-                        .Select(member => (int?)member.MemberId)
-                        .FirstOrDefault()
-                })
-                .ToListAsync();
-
-            return Ok(accounts);
-        }
+        public IActionResult MemberOptions() => Ok(_repo.MemberOptions().ToJsonList());
     }
 }

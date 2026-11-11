@@ -50,9 +50,9 @@ namespace GymManagement.Api.Controllers
 
         [HttpPut("{memberId}/account")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> LinkAccount(int memberId, [FromBody] LinkMemberAccountRequest req)
+        public IActionResult LinkAccount(int memberId, [FromBody] LinkMemberAccountRequest req)
         {
-            var (success, message) = await _memberAccounts.LinkAccountAsync(memberId, req.AccountId);
+            var (success, message) = _memberAccounts.LinkAccount(memberId, req.AccountId);
             if (!success) return BadRequest(new { message });
             return Ok(new { message });
         }
