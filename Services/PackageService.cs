@@ -125,6 +125,8 @@ namespace GymManagement.Api.Services
             return (true, "Package canceled successfully");
         }
 
+        public int ActiveRegistrationCount() => _repo.CountActiveRegistrations();
+
         public List<ExpiringMemberItem> ExpiringSoon(int days)
         {
             var dt = _repo.ExpiringSoon(days);

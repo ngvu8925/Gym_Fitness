@@ -112,6 +112,19 @@ namespace GymManagement.Api.Repositories
             return Convert.ToInt32(dt.Rows[0]["AffectedRows"]);
         }
 
+        /// <summary>
+        /// Đếm đăng ký gói đang có hiệu lực (Dashboard Task 05).
+        /// Status phải khớp với giá trị SP sp_PackageRegistration_Cancel dùng.
+        /// </summary>
+        public int CountActiveRegistrations()
+        {
+            var dt = _db.ExecuteQuery(
+                "SELECT COUNT(*) AS ActiveCount FROM dbo.PackageRegistrations WHERE Status IN (N'Còn hạn', N'Tạm ngưng')",
+                Array.Empty<SqlParameter>(),
+                isStoredProcedure: false);
+            return Convert.ToInt32(dt.Rows[0][0]);
+        }
+
         public DataTable ExpiringSoon(int days)
         {
             return _db.ExecuteQuery("sp_Member_GetExpiringSoon", new SqlParameter("@Days", days));

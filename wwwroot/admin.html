@@ -409,18 +409,43 @@
 
         <section id="tabOverview" class="tab active">
             <div class="pagehead">
-                <h1>Overview</h1>
-                <p>Quick stats for members, packages, and revenue this month.</p>
+                <h1>Dashboard</h1>
+                <p>Thống kê hội viên, gói tập và doanh thu — dữ liệu trực tiếp từ API Reports.</p>
             </div>
             <div class="scoreboard" id="overviewStats">
-                <div class="stat"><div class="num">—</div><div class="lbl">Active members</div></div>
-                <div class="stat"><div class="num">—</div><div class="lbl">Packages on sale</div></div>
-                <div class="stat"><div class="num">—</div><div class="lbl">Open classes</div></div>
-                <div class="stat"><div class="num">—</div><div class="lbl">Revenue this month</div></div>
+                <div class="stat"><div class="num" id="statMembers">…</div><div class="lbl">Hội viên đang hoạt động</div></div>
+                <div class="stat"><div class="num" id="statTrainers">…</div><div class="lbl">Huấn luyện viên</div></div>
+                <div class="stat"><div class="num" id="statClasses">…</div><div class="lbl">Lớp học đang mở</div></div>
+                <div class="stat"><div class="num" id="statTotalRevenue">…</div><div class="lbl">Tổng doanh thu (mọi thời gian)</div></div>
+                <div class="stat"><div class="num" id="statMonthRevenue">…</div><div class="lbl" id="statMonthLabel">Doanh thu tháng</div></div>
+                <div class="stat"><div class="num" id="statActivePackages">…</div><div class="lbl">Gói đang có hiệu lực</div></div>
+                <div class="stat"><div class="num" id="statExpiring">…</div><div class="lbl">Gói sắp hết hạn (7 ngày tới)</div></div>
             </div>
-            <div class="panel">
-                <button class="btn ghost" onclick="loadOverview()">Refresh stats</button>
-                <p class="sub" style="margin-top:10px">Sign in from the Login tab, then use the other tabs to add members, open classes, register packages, and view revenue reports.</p>
+            <div class="panel" style="margin-bottom:20px">
+                <h2>Bộ lọc thời gian</h2>
+                <form class="row" onsubmit="return false;">
+                    <select id="dashYear" style="min-width:120px"></select>
+                    <select id="dashMonth" style="min-width:120px"></select>
+                    <button class="btn ghost" onclick="loadDashboard()">Áp dụng / Làm mới</button>
+                </form>
+                <p class="sub" style="margin-top:8px" id="dashUpdated">Chưa tải dữ liệu.</p>
+            </div>
+            <div class="panel" style="margin-bottom:20px">
+                <h2>📈 Doanh thu theo tháng</h2>
+                <p class="sub" style="margin-bottom:8px">Tổng hợp từ API all-monthly-revenue — cập nhật theo dữ liệu thanh toán thật.</p>
+                <canvas id="dashChartRevenue"></canvas>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:20px; margin-bottom:20px;">
+                <div class="panel">
+                    <h2>🥧 Doanh thu theo chi nhánh</h2>
+                    <p class="sub" style="margin-bottom:8px">API branch-revenue.</p>
+                    <canvas id="dashChartBranch"></canvas>
+                </div>
+                <div class="panel">
+                    <h2>🏆 Gói bán chạy</h2>
+                    <p class="sub" style="margin-bottom:8px">API best-selling-packages.</p>
+                    <canvas id="dashChartBest"></canvas>
+                </div>
             </div>
         </section>
 
@@ -715,24 +740,192 @@ document.getElementById('tabNav').addEventListener('click', (e) => {
           document.getElementById(e.target.dataset.tab).classList.add('active');
 });
 
-async function loadOverview() {
-          const stats = document.querySelectorAll('#overviewStats .stat .num');
-          const members = await api('GET', '/api/members?pageSize=100');
-          if (members) stats[0].textContent = members.totalCount;
+// ===== DASHBOARD THỐNG KÊ (Task 05) =====
+let dashRevChart = null, dashBranchChart = null, dashBestChart = null;
 
-          const packages = await api('GET', '/api/packages?pageSize=100');
-          if (packages) stats[1].textContent = packages.totalCount;
+function setStat(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
 
-          const classes = await api('GET', '/api/classes?pageSize=100');
-          if (classes) stats[2].textContent = classes.totalCount;
+function formatVnd(n) {
+  return Number(n || 0).toLocaleString('en-US') + ' VND';
+}
 
-          const now = new Date();
-          const dt = await api('GET', '/api/reports/monthly-revenue?year=' + now.getFullYear() + '&month=' + (now.getMonth() + 1));
-          if (dt && dt.length > 0) {
-            stats[3].textContent = Number(dt[0].totalRevenue).toLocaleString('en-US') + ' VND';
-          } else if (dt) {
-            stats[3].textContent = '0 VND';
+function markStatError(id) { setStat(id, 'Lỗi'); }
+
+function fillPeriodFilter(months) {
+  const yearSel = document.getElementById('dashYear');
+  const monthSel = document.getElementById('dashMonth');
+  if (!yearSel || yearSel.dataset.filled === '1') return;
+  const years = Array.from(new Set(months.map(m => Number(m.year)))).sort((a, b) => b - a);
+  const now = new Date();
+  if (!years.includes(now.getFullYear())) years.unshift(now.getFullYear());
+  yearSel.innerHTML = years.map(y => '<option value="' + y + '"' + (y === now.getFullYear() ? ' selected' : '') + '>' + y + '</option>').join('');
+  monthSel.innerHTML = Array.from({ length: 12 }, (_, i) =>
+    '<option value="' + (i + 1) + '"' + ((i + 1) === now.getMonth() + 1 ? ' selected' : '') + '>Tháng ' + (i + 1) + '</option>').join('');
+  yearSel.dataset.filled = '1';
+}
+
+async function loadMonthRevenue() {
+  const year = document.getElementById('dashYear').value || new Date().getFullYear();
+  const month = document.getElementById('dashMonth').value || (new Date().getMonth() + 1);
+  document.getElementById('statMonthLabel').textContent = 'Doanh thu tháng ' + month + '/' + year;
+  const dt = await api('GET', '/api/reports/monthly-revenue?year=' + year + '&month=' + month);
+  if (!dt) { markStatError('statMonthRevenue'); return; }
+  setStat('statMonthRevenue', dt.length > 0 ? formatVnd(dt[0].totalRevenue) : '0 VND');
+}
+
+function renderRevenueChart(months) {
+  const labels = months.map(m => 'T' + m.month + '/' + m.year);
+  const values = months.map(m => Number(m.totalRevenue || 0));
+  if (dashRevChart) dashRevChart.destroy();
+  dashRevChart = new Chart(document.getElementById('dashChartRevenue'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Doanh thu (VND)',
+        data: values,
+        fill: true,
+        tension: 0.3,
+        borderColor: '#14171c',
+        backgroundColor: 'rgba(20,23,28,0.08)',
+        pointBackgroundColor: '#14171c'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatVnd(ctx.parsed.y) } }
+      },
+      scales: { y: { ticks: { callback: v => Number(v).toLocaleString('en-US') } } }
+    }
+  });
+}
+
+function renderBranchChart(data) {
+  if (!data.length) {
+    document.getElementById('dashChartBranch').replaceWith(
+      Object.assign(document.createElement('p'), { textContent: 'Chưa có dữ liệu doanh thu theo chi nhánh.', className: 'sub' }));
+    return;
+  }
+  if (dashBranchChart) dashBranchChart.destroy();
+  const palette = ['#14171c', '#c8ff2e', '#5a6472', '#9aa5b1', '#2e3440'];
+  dashBranchChart = new Chart(document.getElementById('dashChartBranch'), {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.branchName),
+      datasets: [{
+        label: 'Doanh thu (VND)',
+        data: data.map(d => Number(d.totalRevenue || 0)),
+        backgroundColor: data.map((_, i) => palette[i % palette.length]),
+        borderColor: '#f3f2ed'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true, position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + formatVnd(ctx.parsed) } }
+      }
+    }
+  });
+}
+
+function renderBestChart(data) {
+  if (!data.length) {
+    document.getElementById('dashChartBest').replaceWith(
+      Object.assign(document.createElement('p'), { textContent: 'Chưa có dữ liệu bán hàng.', className: 'sub' }));
+    return;
+  }
+  if (dashBestChart) dashBestChart.destroy();
+  dashBestChart = new Chart(document.getElementById('dashChartBest'), {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.packageName),
+      datasets: [{
+        label: 'Số đăng ký',
+        data: data.map(d => Number(d.registrationCount || 0)),
+        backgroundColor: '#14171c'
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: ctx => 'Đăng ký: ' + ctx.parsed.x + ' · Doanh thu: ' + formatVnd(data[ctx.dataIndex].revenue)
           }
+        }
+      },
+      scales: { x: { ticks: { precision: 0 } } }
+    }
+  });
+}
+
+async function loadOverview() {
+  setStat('statMembers', '…'); setStat('statTrainers', '…'); setStat('statClasses', '…');
+  setStat('statTotalRevenue', '…'); setStat('statMonthRevenue', '…');
+  setStat('statActivePackages', '…'); setStat('statExpiring', '…');
+
+  // Đếm nhanh: chỉ cần totalCount nên pageSize=1
+  const [members, trainers, classes] = await Promise.all([
+    api('GET', '/api/members?pageSize=1'),
+    api('GET', '/api/trainers?pageSize=1'),
+    api('GET', '/api/classes?pageSize=1')
+  ]);
+  if (members) setStat('statMembers', members.totalCount); else markStatError('statMembers');
+  if (trainers) setStat('statTrainers', trainers.totalCount); else markStatError('statTrainers');
+  if (classes) setStat('statClasses', classes.totalCount); else markStatError('statClasses');
+
+  // Tổng doanh thu + biểu đồ theo tháng (cộng dồn từ dữ liệu thật)
+  const months = await api('GET', '/api/reports/all-monthly-revenue');
+  if (months) {
+    const total = months.reduce((s, m) => s + Number(m.totalRevenue || 0), 0);
+    setStat('statTotalRevenue', formatVnd(total));
+    fillPeriodFilter(months);
+    renderRevenueChart(months);
+  } else {
+    markStatError('statTotalRevenue');
+  }
+
+  await loadMonthRevenue();
+
+  // Gói đang có hiệu lực
+  const active = await api('GET', '/api/package-registrations/active-count');
+  if (active) setStat('statActivePackages', active.count); else markStatError('statActivePackages');
+
+  // Gói sắp hết hạn trong 7 ngày tới (API có sẵn)
+  const exp = await api('GET', '/api/packages/expiring-soon?days=7');
+  if (exp) setStat('statExpiring', exp.length); else markStatError('statExpiring');
+
+  // Chi nhánh + gói bán chạy
+  const branch = await api('GET', '/api/reports/branch-revenue');
+  if (branch) renderBranchChart(branch);
+  const best = await api('GET', '/api/reports/best-selling-packages');
+  if (best) renderBestChart(best);
+
+  document.getElementById('dashUpdated').textContent = 'Cập nhật lúc ' + new Date().toLocaleTimeString('vi-VN') + ' — dữ liệu từ API, không hardcode.';
+}
+
+// Nút "Áp dụng / Làm mới": chỉ tải lại doanh thu theo bộ lọc + toàn dashboard
+function loadDashboard() {
+  const yearSel = document.getElementById('dashYear');
+  const monthSel = document.getElementById('dashMonth');
+  if (yearSel && monthSel && yearSel.value && monthSel.value) {
+    const year = yearSel.value, month = monthSel.value;
+    document.getElementById('statMonthLabel').textContent = 'Doanh thu tháng ' + month + '/' + year;
+    api('GET', '/api/reports/monthly-revenue?year=' + year + '&month=' + month).then(dt => {
+      if (dt) setStat('statMonthRevenue', dt.length > 0 ? formatVnd(dt[0].totalRevenue) : '0 VND');
+    });
+    document.getElementById('dashUpdated').textContent = 'Đã áp dụng bộ lọc tháng ' + month + '/' + year + ' lúc ' + new Date().toLocaleTimeString('vi-VN');
+  } else {
+    loadOverview();
+  }
 }
 function showLoginOnly() {
           document.body.classList.add('signed-out');

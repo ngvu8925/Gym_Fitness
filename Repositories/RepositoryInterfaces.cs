@@ -25,6 +25,7 @@ namespace GymManagement.Api.Repositories
         void Resume(int pauseId);
         DataTable GetRegistrationInfo(int registrationId);
         int CancelRegistration(int registrationId, string reason);
+        int CountActiveRegistrations();
         DataTable ExpiringSoon(int days);
     }
 

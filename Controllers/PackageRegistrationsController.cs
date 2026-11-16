@@ -85,5 +85,10 @@ namespace GymManagement.Api.Controllers
             if (!success) return BadRequest(new { message });
             return Ok(new { message });
         }
+
+        // Dashboard (Task 05): số đăng ký gói đang có hiệu lực (Còn hạn / Tạm ngưng).
+        [HttpGet("active-count")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult ActiveCount() => Ok(new { count = _service.ActiveRegistrationCount() });
     }
 }

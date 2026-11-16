@@ -24,6 +24,7 @@ namespace GymManagement.Api.Services
         void Pause(PausePackageRequest req);
         void Resume(int pauseId);
         (bool Success, string Message) CancelRegistration(CancelPackageRequest req);
+        int ActiveRegistrationCount();
         List<ExpiringMemberItem> ExpiringSoon(int days);
     }
 
