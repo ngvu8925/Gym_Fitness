@@ -25,7 +25,7 @@ BEGIN
     BEGIN
         SELECT * FROM dbo.Members
         WHERE Status = 1
-          AND (@Keyword IS NULL OR FullName LIKE '%' + @Keyword + '%' OR PhoneNumber LIKE '%' + @Keyword + '%')
+          AND (@Keyword IS NULL OR FullName LIKE '%' + @Keyword + '%' OR PhoneNumber LIKE '%' + @Keyword + '%' OR Email LIKE '%' + @Keyword + '%')
         ORDER BY FullName;
         RETURN;
     END
@@ -37,14 +37,14 @@ BEGIN
         SELECT *, COUNT(*) OVER() AS TotalCount
         FROM dbo.Members
         WHERE Status = 1
-          AND (@Keyword IS NULL OR FullName LIKE '%' + @Keyword + '%' OR PhoneNumber LIKE '%' + @Keyword + '%')
+          AND (@Keyword IS NULL OR FullName LIKE '%' + @Keyword + '%' OR PhoneNumber LIKE '%' + @Keyword + '%' OR Email LIKE '%' + @Keyword + '%')
         ORDER BY FullName DESC
         OFFSET @Skip ROWS FETCH NEXT @PageSize ROWS ONLY;
     ELSE
         SELECT *, COUNT(*) OVER() AS TotalCount
         FROM dbo.Members
         WHERE Status = 1
-          AND (@Keyword IS NULL OR FullName LIKE '%' + @Keyword + '%' OR PhoneNumber LIKE '%' + @Keyword + '%')
+          AND (@Keyword IS NULL OR FullName LIKE '%' + @Keyword + '%' OR PhoneNumber LIKE '%' + @Keyword + '%' OR Email LIKE '%' + @Keyword + '%')
         ORDER BY FullName ASC
         OFFSET @Skip ROWS FETCH NEXT @PageSize ROWS ONLY;
 END

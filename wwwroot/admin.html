@@ -473,10 +473,11 @@
             <div class="panel">
                 <h2>Member list</h2>
                 <form class="row" onsubmit="return false;">
-                    <input id="memberKeyword" placeholder="Search by name or phone">
+                    <input id="memberKeyword" placeholder="Search by name, phone or email">
                     <button class="btn ghost" onclick="loadMembers()">Search / reload</button>
                 </form>
                 <div id="memberTable"></div>
+                <div id="pagerMembers"></div>
             </div>
             <div class="panel">
                 <h2>Cancel member package</h2>
@@ -521,8 +522,12 @@
             </div>
             <div class="panel">
                 <h2>Package list</h2>
-                <button class="btn ghost" onclick="loadPackages()">Reload</button>
+                <form class="row" onsubmit="return false;">
+                    <input id="kw-packages" placeholder="Search by package name or type">
+                    <button class="btn ghost" onclick="searchTable('packages')">Search</button>
+                </form>
                 <div id="packageTable"></div>
+                <div id="pagerPackages"></div>
             </div>
             <div class="panel">
                 <h2>Register package for member</h2>
@@ -554,7 +559,12 @@
                     <button id="trainerCancelButton" class="btn ghost" onclick="cancelTrainerEdit()" style="display:none">Cancel edit</button>
                 </form>
                 <button class="btn ghost" onclick="loadTrainers()" style="margin-top:8px">Load trainers</button>
+                <form class="row" onsubmit="return false;" style="margin-top:8px">
+                    <input id="kw-trainers" placeholder="Search by trainer name or specialty">
+                    <button class="btn ghost" onclick="searchTable('trainers')">Search</button>
+                </form>
                 <div id="trainerTable"></div>
+                <div id="pagerTrainers"></div>
             </div>
             <div class="panel">
                 <h2>Add class</h2>
@@ -570,7 +580,12 @@
                     <button id="classCancelButton" class="btn ghost" onclick="cancelClassEdit()" style="display:none">Cancel edit</button>
                 </form>
                 <button class="btn ghost" onclick="loadClasses()" style="margin-top:8px">Load classes</button>
+                <form class="row" onsubmit="return false;" style="margin-top:8px">
+                    <input id="kw-classes" placeholder="Search by class name or trainer">
+                    <button class="btn ghost" onclick="searchTable('classes')">Search</button>
+                </form>
                 <div id="classTable"></div>
+                <div id="pagerClasses"></div>
             </div>
         </section>
 
@@ -851,20 +866,84 @@ async function deactivateMember(memberId) {
 }
 
 async function loadMembers() {
-          const keyword = document.getElementById('memberKeyword').value;
-          const data = await api('GET', '/api/members?pageSize=100&keyword=' + encodeURIComponent(keyword));
+          const s = pageState.members;
+          s.keyword = document.getElementById('memberKeyword').value;
+          const data = await api('GET', '/api/members?page=' + s.page + '&pageSize=' + s.pageSize + '&keyword=' + encodeURIComponent(s.keyword));
           if (data) {
             adminMembers = data.items || [];
-            renderMembersTable(adminMembers);
+            if (!adminMembers.length && pageState.members.page > 1) { pageState.members.page--; return loadMembers(); }
+            const emptyText = s.keyword
+              ? 'No members match "' + s.keyword + '".'
+              : 'No matching members. Add a new member using the form above.';
+            renderMembersTable(adminMembers, emptyText);
+            renderPager('pagerMembers', 'members', data);
             populateMemberLinkOptions();
           }
 }
 
-function renderMembersTable(rows) {
+// ===== PHÂN TRANG + TÌM KIẾM (Task 04) =====
+const pageState = {
+  members:   { page: 1, pageSize: 10 },
+  packages:  { page: 1, pageSize: 10 },
+  classes:   { page: 1, pageSize: 10 },
+  trainers:  { page: 1, pageSize: 10 }
+};
+const loadFns = {
+  members: loadMembers,
+  packages: loadPackages,
+  classes: loadClasses,
+  trainers: loadTrainers
+};
+
+function renderPager(containerId, key, meta) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const s = pageState[key];
+  const page = meta && meta.page ? meta.page : s.page;
+  const totalPages = meta ? (meta.totalPages || 1) : 1;
+  const total = meta ? (meta.totalCount || 0) : 0;
+  const prevDisabled = !(meta && meta.hasPrevious) ? ' disabled style="opacity:.4"' : '';
+  const nextDisabled = !(meta && meta.hasNext) ? ' disabled style="opacity:.4"' : '';
+  const sizeOptions = [10, 20, 50, 100].map(n =>
+    '<option value="' + n + '"' + (n === s.pageSize ? ' selected' : '') + '>' + n + '</option>').join('');
+  el.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">' +
+      '<button class="btn ghost" onclick="changePage(\'' + key + '\',-1)"' + prevDisabled + '>◀ Trang trước</button>' +
+      '<span>Trang <strong>' + page + '</strong> / <strong>' + totalPages + '</strong>' +
+      ' · Tổng <strong>' + total + '</strong> bản ghi</span>' +
+      '<button class="btn ghost" onclick="changePage(\'' + key + '\',1)"' + nextDisabled + '>Trang tiếp theo ▶</button>' +
+      '<label style="margin-left:auto">Số dòng: ' +
+        '<select onchange="changePageSize(\'' + key + '\')">' + sizeOptions + '</select>' +
+      '</label>' +
+    '</div>';
+}
+
+function changePage(key, delta) {
+  const s = pageState[key];
+  const newPage = s.page + delta;
+  if (newPage < 1) return; // nút đã disable, chặn thêm cho chắc
+  s.page = newPage;
+  loadFns[key]();
+}
+
+function changePageSize(key) {
+  const el = document.querySelector('#pager' + key.charAt(0).toUpperCase() + key.slice(1) + ' select');
+  const s = pageState[key];
+  if (el) s.pageSize = Number(el.value);
+  s.page = 1; // đổi số dòng -> quay về trang đầu
+  loadFns[key]();
+}
+
+function searchTable(key) {
+  pageState[key].page = 1; // tìm kiếm mới -> về trang đầu
+  loadFns[key]();
+}
+
+function renderMembersTable(rows, emptyText) {
           const container = document.getElementById('memberTable');
           container.innerHTML = '';
           if (!rows.length) {
-            container.textContent = 'No matching members. Add a new member using the form above.';
+            container.textContent = emptyText || 'No matching members. Add a new member using the form above.';
             return;
           }
           const table = document.createElement('table');
@@ -1048,15 +1127,22 @@ async function deletePackage(packageId) {
 }
 
 async function loadPackages() {
-          const data = await api('GET', '/api/packages?pageSize=100');
+          const s = pageState.packages;
+          s.keyword = document.getElementById('kw-packages').value;
+          const data = await api('GET', '/api/packages?page=' + s.page + '&pageSize=' + s.pageSize + '&keyword=' + encodeURIComponent(s.keyword));
           if (data) {
             packageRows = data.items || [];
+            if (!packageRows.length && pageState.packages.page > 1) { pageState.packages.page--; return loadPackages(); }
+            const emptyText = s.keyword
+              ? 'No packages match "' + s.keyword + '".'
+              : 'No packages yet. Add a package using the form above.';
             renderTable('packageTable', packageRows, [
               { key: 'packageId', label: 'ID' }, { key: 'packageName', label: 'Name' },
               { key: 'packageType', label: 'Type' }, { key: 'months', label: 'Months' },
               { key: 'price', label: 'Price' }
-            ], 'No packages yet. Add a package using the form above.',
+            ], emptyText,
                row => actionButtons('editPackage', 'deletePackage', row.packageId));
+            renderPager('pagerPackages', 'packages', data);
           }
 }
 
@@ -1129,14 +1215,21 @@ async function deleteTrainer(trainerId) {
 }
 
 async function loadTrainers() {
-          const data = await api('GET', '/api/trainers?pageSize=100');
+          const s = pageState.trainers;
+          s.keyword = document.getElementById('kw-trainers').value;
+          const data = await api('GET', '/api/trainers?page=' + s.page + '&pageSize=' + s.pageSize + '&keyword=' + encodeURIComponent(s.keyword));
           if (data) {
             trainerRows = data.items || [];
+            if (!trainerRows.length && pageState.trainers.page > 1) { pageState.trainers.page--; return loadTrainers(); }
+            const emptyText = s.keyword
+              ? 'No trainers match "' + s.keyword + '".'
+              : 'No trainers yet. Add one using the form above.';
             renderTable('trainerTable', trainerRows, [
               { key: 'trainerId', label: 'ID' }, { key: 'fullName', label: 'Full name' },
               { key: 'specialty', label: 'Specialty' }, { key: 'phone', label: 'Phone' }
-            ], 'No trainers yet. Add one using the form above.',
+            ], emptyText,
                row => actionButtons('editTrainer', 'deleteTrainer', row.trainerId));
+            renderPager('pagerTrainers', 'trainers', data);
           }
 }
 
@@ -1221,15 +1314,22 @@ function formatSchedule(c) {
 }
 
 async function loadClasses() {
-          const data = await api('GET', '/api/classes?pageSize=100');
+          const s = pageState.classes;
+          s.keyword = document.getElementById('kw-classes').value;
+          const data = await api('GET', '/api/classes?page=' + s.page + '&pageSize=' + s.pageSize + '&keyword=' + encodeURIComponent(s.keyword));
           if (data) {
             classRows = data.items || [];
+            if (!classRows.length && pageState.classes.page > 1) { pageState.classes.page--; return loadClasses(); }
+            const emptyText = s.keyword
+              ? 'No classes match "' + s.keyword + '".'
+              : 'No classes yet. Add one using the form above.';
             renderTable('classTable', classRows.map(c => ({ ...c, schedule: formatSchedule(c) })), [
               { key: 'classId', label: 'ID' }, { key: 'className', label: 'Class' },
               { key: 'trainerName', label: 'Trainer' }, { key: 'capacity', label: 'Capacity' },
               { key: 'schedule', label: 'Schedule' }
-            ], 'No classes yet. Add one using the form above.',
+            ], emptyText,
                row => actionButtons('editClass', 'deleteClass', row.classId));
+            renderPager('pagerClasses', 'classes', data);
           }
 }
 
