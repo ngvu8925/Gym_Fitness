@@ -23,6 +23,7 @@ namespace GymManagement.Api.Services
         (bool Success, string Message, int RegistrationId, decimal DiscountAmount) Register(PackageRegistrationRequest req);
         void Pause(PausePackageRequest req);
         void Resume(int pauseId);
+        (bool Success, string Message) CancelRegistration(CancelPackageRequest req);
         List<ExpiringMemberItem> ExpiringSoon(int days);
     }
 
@@ -33,6 +34,7 @@ namespace GymManagement.Api.Services
         (bool Success, string Message) Update(int classId, GymClassRequest req);
         void Delete(int classId);
         (bool Success, string Message, int EnrollmentId) Enroll(ClassEnrollmentRequest req);
+        (bool Success, string Message) Unenroll(int enrollmentId, int memberId);
     }
 
     public interface ITrainerService

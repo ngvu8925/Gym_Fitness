@@ -65,5 +65,25 @@ namespace GymManagement.Api.Controllers
             _service.Resume(pauseId);
             return Ok(new { message = "Package resumed" });
         }
+
+        // Danh sách gói đang sử dụng của 1 hội viên (cho Admin chọn gói cần hủy).
+        // Gồm cả gói đã hủy để hiển thị lịch sử — Status trả về từ DB.
+        [HttpGet("member/{memberId}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult MemberPackages(int memberId)
+        {
+            return Ok(new { items = _memberAccounts.GetMyPackages(memberId) });
+        }
+
+        // Admin hủy gói của hội viên: ghi nhận Status = "Đã hủy" + CancelDate + CancelReason.
+        // KHÔNG xóa Payments, KHÔNG hoàn tiền.
+        [HttpPost("cancel")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Cancel([FromBody] CancelPackageRequest req)
+        {
+            var (success, message) = _service.CancelRegistration(req);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
+        }
     }
 }

@@ -479,6 +479,16 @@
                 <div id="memberTable"></div>
             </div>
             <div class="panel">
+                <h2>Cancel member package</h2>
+                <p class="sub">Chọn hội viên, xem gói đang dùng và hủy gói. Lịch sử thanh toán được bảo toàn — không hoàn tiền tự động.</p>
+                <form class="row" onsubmit="return false;">
+                    <select id="cancelPkgMember" style="min-width:220px"></select>
+                    <input id="cancelPkgReason" placeholder="Lý do hủy (tuỳ chọn)">
+                    <button class="btn ghost" onclick="loadMemberPackagesForCancel()">Xem gói của hội viên</button>
+                </form>
+                <div id="cancelPkgList" style="margin-top:10px"></div>
+            </div>
+            <div class="panel">
                 <h2>Link member login</h2>
                 <p class="sub">Connect one member profile to its own Member account so the user portal shows only that person's information.</p>
                 <form class="row" onsubmit="return false;">
@@ -889,6 +899,54 @@ function populateMemberLinkOptions() {
             option.value = member.memberId;
             option.textContent = `${member.fullName} (#${member.memberId})`;
             select.appendChild(option);
+          }
+          const cancelSelect = document.getElementById('cancelPkgMember');
+          if (cancelSelect) {
+            cancelSelect.innerHTML = '';
+            for (const member of adminMembers) {
+              const option = document.createElement('option');
+              option.value = member.memberId;
+              option.textContent = `${member.fullName} (#${member.memberId})`;
+              cancelSelect.appendChild(option);
+            }
+          }
+}
+
+// ===== HỦY GÓI TẬP CỦA HỘI VIÊN (Admin) =====
+async function loadMemberPackagesForCancel() {
+          const memberId = document.getElementById('cancelPkgMember').value;
+          if (!memberId) { toast('Chọn hội viên trước.', false); return; }
+          const data = await api('GET', '/api/package-registrations/member/' + memberId);
+          if (!data) return;
+          const items = data.items || [];
+          const box = document.getElementById('cancelPkgList');
+          if (!items.length) {
+            box.innerHTML = '<p class="sub">Hội viên này chưa có đăng ký gói nào.</p>';
+            return;
+          }
+          box.innerHTML = '<table style="width:100%"><thead><tr><th>#</th><th>Package</th><th>From</th><th>To</th><th>Status</th><th>Action</th></tr></thead><tbody>' +
+            items.map(r => {
+              const active = (r.status === 'Còn hạn' || r.status === 'Tạm ngưng');
+              const from = r.startDate ? String(r.startDate).split('T')[0] : '--';
+              const to = r.endDate ? String(r.endDate).split('T')[0] : '--';
+              const action = active
+                ? '<button class="btn ghost" onclick="adminCancelPackage(' + r.registrationId + ', this)">Cancel</button>'
+                : '<span style="color:#888">—</span>';
+              return `<tr><td>${r.registrationId}</td><td>${r.packageName}</td><td>${from}</td><td>${to}</td><td>${r.status}</td><td>${action}</td></tr>`;
+            }).join('') + '</tbody></table>';
+}
+
+async function adminCancelPackage(registrationId, btn) {
+          const memberId = document.getElementById('cancelPkgMember').value;
+          const reason = document.getElementById('cancelPkgReason').value.trim();
+          if (!confirm('Hủy gói đăng ký #' + registrationId + ' của hội viên này?\nLịch sử thanh toán sẽ được giữ nguyên.')) return;
+          const data = await api('POST', '/api/package-registrations/cancel', {
+            registrationId: registrationId,
+            reason: reason || 'Admin canceled'
+          });
+          if (data) {
+            toast(data.message || 'Package canceled.');
+            loadMemberPackagesForCancel(); // cập nhật trạng thái ngay
           }
 }
 

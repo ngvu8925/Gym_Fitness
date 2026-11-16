@@ -90,6 +90,41 @@ namespace GymManagement.Api.Services
 
         public void Resume(int pauseId) => _repo.Resume(pauseId);
 
+        // Trạng thái gói trong DB (khớp với sp_PackageRegistration_Cancel).
+        private static readonly HashSet<string> CancellableStatuses = new(StringComparer.Ordinal)
+        {
+            "Còn hạn", "Tạm ngưng"
+        };
+
+        public (bool Success, string Message) CancelRegistration(CancelPackageRequest req)
+        {
+            if (req == null || req.RegistrationId <= 0)
+                return (false, "RegistrationId is required");
+
+            var dt = _repo.GetRegistrationInfo(req.RegistrationId);
+            if (dt.Rows.Count == 0)
+                return (false, "Package registration not found");
+
+            var row = dt.Rows[0];
+            var status = row["Status"]?.ToString() ?? string.Empty;
+            if (!CancellableStatuses.Contains(status))
+                return (false, status == "Đã hủy"
+                    ? "Package is already canceled"
+                    : $"Package is not active (status: {status}); cannot cancel");
+
+            // Gói đã qua ngày kết thúc = đã hết hạn, không cần hủy nữa.
+            if (row.Table.Columns.Contains("EndDate") && row["EndDate"] != DBNull.Value
+                && Convert.ToDateTime(row["EndDate"]) < DateTime.Today)
+                return (false, "Package has already expired; cannot cancel");
+
+            int affected = _repo.CancelRegistration(req.RegistrationId,
+                string.IsNullOrWhiteSpace(req.Reason) ? "Admin canceled" : req.Reason.Trim());
+            if (affected == 0)
+                return (false, "Package could not be canceled (status changed)");
+
+            return (true, "Package canceled successfully");
+        }
+
         public List<ExpiringMemberItem> ExpiringSoon(int days)
         {
             var dt = _repo.ExpiringSoon(days);

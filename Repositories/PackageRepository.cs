@@ -87,6 +87,31 @@ namespace GymManagement.Api.Repositories
             _db.ExecuteNonQuery("sp_PackageRegistration_Resume", new SqlParameter("@SuspensionId", pauseId));
         }
 
+        /// <summary>
+        /// Trạng thái + ngày kết thúc của 1 đăng ký gói (dùng kiểm tra trước khi hủy).
+        /// </summary>
+        public DataTable GetRegistrationInfo(int registrationId)
+        {
+            return _db.ExecuteQuery(
+                "SELECT Status, EndDate FROM dbo.PackageRegistrations WHERE RegistrationId = @RegistrationId",
+                new SqlParameter[] { new("@RegistrationId", registrationId) },
+                isStoredProcedure: false);
+        }
+
+        /// <summary>
+        /// Admin hủy gói — SP chỉ cập nhật gói còn hạn/tạm ngưng, trả về số dòng ảnh hưởng.
+        /// Không xóa Payments (lịch sử thanh toán bảo toàn).
+        /// </summary>
+        public int CancelRegistration(int registrationId, string reason)
+        {
+            var dt = _db.ExecuteQuery("sp_PackageRegistration_Cancel", new SqlParameter[]
+            {
+                new("@RegistrationId", registrationId),
+                new("@Reason", (object?)reason ?? DBNull.Value)
+            });
+            return Convert.ToInt32(dt.Rows[0]["AffectedRows"]);
+        }
+
         public DataTable ExpiringSoon(int days)
         {
             return _db.ExecuteQuery("sp_Member_GetExpiringSoon", new SqlParameter("@Days", days));

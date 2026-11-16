@@ -1404,11 +1404,11 @@
                     const days = c.daysOfWeek ? formatDays(c.daysOfWeek) : 'Linh hoạt';
                     return `
                         <div style="padding: 10px 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px;">
-                            <div style="display: flex; justify-content: space-between; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; gap: 8px; align-items: center;">
                                 <strong style="color: #fff; font-size: 14px;">${c.className}</strong>
-                                <span style="color: var(--volt); font-size: 12px; white-space: nowrap;">${days}${c.startTime ? ' · ' + time : ''}</span>
+                                <button class="btn ghost" style="font-size: 12px; padding: 4px 10px; white-space: nowrap;" onclick="cancelMyClass(${c.enrollmentId})">✕ Hủy đăng ký</button>
                             </div>
-                            <div style="color: var(--steel); font-size: 12px; margin-top: 4px;">👤 HLV: <strong style="color: #fff;">${c.trainerName || 'Chưa phân công'}</strong></div>
+                            <div style="color: var(--steel); font-size: 12px; margin-top: 4px;">👤 HLV: <strong style="color: #fff;">${c.trainerName || 'Chưa phân công'}</strong> · <span>${days}${c.startTime ? ' · ' + time : ''}</span></div>
                         </div>`;
                 }).join('');
             }
@@ -1665,6 +1665,16 @@
                 document.getElementById('pwdCurrent').value = '';
                 document.getElementById('pwdNew').value = '';
                 document.getElementById('pwdConfirm').value = '';
+            }
+        }
+
+        // ===== HỦY ĐĂNG KÝ LỚP HỌC =====
+        async function cancelMyClass(enrollmentId) {
+            if (!confirm('Bạn chắc chắn muốn hủy đăng ký lớp này? Lịch sử đăng ký vẫn được lưu lại.')) return;
+            const data = await api('POST', '/api/classes/unenroll/' + enrollmentId);
+            if (data) {
+                toast(data.message || 'Hủy đăng ký lớp thành công!');
+                initPortal(); // cập nhật lại danh sách ngay lập tức
             }
         }
 

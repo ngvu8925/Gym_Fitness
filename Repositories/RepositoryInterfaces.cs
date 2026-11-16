@@ -23,6 +23,8 @@ namespace GymManagement.Api.Repositories
         (int RegistrationId, decimal DiscountAmount) Register(PackageRegistrationRequest req);
         void Pause(PausePackageRequest req);
         void Resume(int pauseId);
+        DataTable GetRegistrationInfo(int registrationId);
+        int CancelRegistration(int registrationId, string reason);
         DataTable ExpiringSoon(int days);
     }
 
@@ -33,6 +35,8 @@ namespace GymManagement.Api.Repositories
         void Update(int classId, GymClassRequest req);
         void Delete(int classId);
         int Enroll(ClassEnrollmentRequest req);
+        DataTable GetEnrollment(int enrollmentId, int memberId);
+        int CancelRegistration(int enrollmentId, int memberId);
     }
 
     public interface ITrainerRepository

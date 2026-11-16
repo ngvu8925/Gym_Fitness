@@ -57,3 +57,16 @@ BEGIN
     WHERE MemberId = @MemberId;
 END
 GO
+
+-- ============================================================
+-- (Task 03, duyệt ngày 2026-11-16) Thay UQ_HoiVien_SDT bằng filtered
+-- unique index: SĐT thật vẫn không được trùng, nhưng cho phép nhiều
+-- member không nhập SĐT (lưu ''). Trước đây member thứ hai không nhập
+-- SĐT bị lỗi "Violation of UNIQUE KEY constraint 'UQ_HoiVien_SDT'".
+-- ============================================================
+IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = 'UQ_HoiVien_SDT')
+    ALTER TABLE dbo.Members DROP CONSTRAINT UQ_HoiVien_SDT;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_Members_Phone' AND object_id = OBJECT_ID('dbo.Members'))
+    CREATE UNIQUE INDEX UX_Members_Phone ON dbo.Members(PhoneNumber) WHERE PhoneNumber <> '';
+GO

@@ -70,5 +70,36 @@ namespace GymManagement.Api.Repositories
             var dt = _db.ExecuteQuery("sp_ClassRegistration_Create", ps);
             return Convert.ToInt32(dt.Rows[0]["ClassRegistrationId"]);
         }
+
+        /// <summary>
+        /// Lấy thông tin 1 đăng ký lớp (chỉ khi đúng thuộc hội viên này).
+        /// </summary>
+        public DataTable GetEnrollment(int enrollmentId, int memberId)
+        {
+            return _db.ExecuteQuery(
+                @"SELECT cr.ClassRegistrationId, cr.Status, c.DaysOfWeek, c.StartTime, c.EndTime
+                  FROM dbo.ClassRegistrations cr
+                  INNER JOIN dbo.Classes c ON c.ClassId = cr.ClassId
+                  WHERE cr.ClassRegistrationId = @ClassRegistrationId AND cr.MemberId = @MemberId",
+                new SqlParameter[]
+                {
+                    new("@ClassRegistrationId", enrollmentId),
+                    new("@MemberId", memberId)
+                },
+                isStoredProcedure: false);
+        }
+
+        /// <summary>
+        /// Hủy đăng ký lớp — SP chỉ cập nhật dòng đúng của hội viên, trả về số dòng ảnh hưởng.
+        /// </summary>
+        public int CancelRegistration(int enrollmentId, int memberId)
+        {
+            var dt = _db.ExecuteQuery("sp_ClassRegistration_Cancel", new SqlParameter[]
+            {
+                new("@ClassRegistrationId", enrollmentId),
+                new("@MemberId", memberId)
+            });
+            return Convert.ToInt32(dt.Rows[0]["AffectedRows"]);
+        }
     }
 }

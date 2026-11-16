@@ -55,6 +55,22 @@ namespace GymManagement.Api.Controllers
             return Ok(new { message, enrollmentId });
         }
 
+        [HttpPost("unenroll/{enrollmentId}")]
+        [Authorize(Roles = "Member")]
+        public IActionResult Unenroll(int enrollmentId)
+        {
+            // MemberId luôn lấy từ JWT — hội viên chỉ hủy được đăng ký của chính mình.
+            var accountId = User.GetAccountId();
+            if (accountId == null) return Unauthorized();
+            var member = _memberAccounts.GetMemberForAccount(accountId.Value);
+            if (member == null)
+                return Conflict(new { message = "This account is not linked to a member profile." });
+
+            var (success, message) = _service.Unenroll(enrollmentId, member.MemberId);
+            if (!success) return BadRequest(new { message });
+            return Ok(new { message });
+        }
+
         [HttpPut("{classId}")]
         [Authorize(Roles = "Admin")]
         public IActionResult Update(int classId, [FromBody] GymClassRequest req)

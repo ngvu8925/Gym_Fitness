@@ -81,5 +81,59 @@ namespace GymManagement.Api.Services
             int enrollmentId = _repo.Enroll(req);
             return (true, "Class enrolled successfully", enrollmentId);
         }
+
+        // Trạng thái đăng ký trong DB (giữ khớp với sp_ClassRegistration_Cancel).
+        private const string ClassStatusActive = "Đã đăng ký";
+        private const string ClassStatusCancelled = "Đã hủy";
+
+        public (bool Success, string Message) Unenroll(int enrollmentId, int memberId)
+        {
+            var dt = _repo.GetEnrollment(enrollmentId, memberId);
+            if (dt.Rows.Count == 0)
+                return (false, "Registration not found or does not belong to you");
+
+            var row = dt.Rows[0];
+            var status = row["Status"]?.ToString();
+            if (status == ClassStatusCancelled)
+                return (false, "Registration is already canceled");
+
+            // Quy tắc nghiệp vụ: lớp có giờ bắt đầu và hôm nay là ngày tập
+            // -> sau giờ bắt đầu buổi hôm nay thì không cho hủy (lớp đã bắt đầu).
+            var daysOfWeek = row.Table.Columns.Contains("DaysOfWeek") ? row["DaysOfWeek"]?.ToString() : null;
+            var startTime = row.Table.Columns.Contains("StartTime") && row["StartTime"] != DBNull.Value
+                ? (TimeSpan)row["StartTime"]
+                : (TimeSpan?)null;
+
+            if (startTime != null && !string.IsNullOrWhiteSpace(daysOfWeek) && IsClassDayToday(daysOfWeek))
+            {
+                if (DateTime.Now.TimeOfDay >= startTime)
+                    return (false, "Class has already started today; cancellation is not allowed");
+            }
+
+            int affected = _repo.CancelRegistration(enrollmentId, memberId);
+            if (affected == 0)
+                return (false, "Registration could not be canceled (already canceled)");
+
+            return (true, "Class registration canceled successfully");
+        }
+
+        /// <summary>
+        /// DaysOfWeek lưu dạng "2,4,6" (thứ 2, 4, 6); Chủ nhật là 1 hoặc 8.
+        /// </summary>
+        private static bool IsClassDayToday(string daysOfWeek)
+        {
+            var today = DateTime.Now.DayOfWeek;               // Mon..Sun
+            int todayNum = today == DayOfWeek.Sunday ? 1 : (int)today + 1; // 1=CN, 2=T2..7=T7
+
+            foreach (var part in daysOfWeek.Split(','))
+            {
+                if (int.TryParse(part.Trim(), out int n))
+                {
+                    if (n == todayNum) return true;
+                    if (todayNum == 1 && (n == 1 || n == 8)) return true; // CN ghi là 1 hoặc 8
+                }
+            }
+            return false;
+        }
     }
 }
