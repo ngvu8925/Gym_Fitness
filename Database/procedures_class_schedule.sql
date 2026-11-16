@@ -3,6 +3,13 @@
 -- Chạy thủ công trên DB QL_GymFitness_Pro (KHÔNG tự chạy)
 -- ============================================================
 
+-- QUAN TRỌNG: khi chạy bằng sqlcmd, session mặc định QUOTED_IDENTIFIER OFF
+-- và SP sẽ "đóng dấu" tùy chọn này lúc tạo -> có thể lỗi INSERT/UPDATE
+-- trên bảng có filtered index/computed column. Phải bật ON trước khi tạo SP.
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
 -- 1) Thêm cột lịch học vào bảng Classes (nếu chưa có)
 IF COL_LENGTH('Classes', 'DaysOfWeek') IS NULL
     ALTER TABLE Classes ADD DaysOfWeek NVARCHAR(50) NULL; -- VD: '2,4,6' (thứ 2, 4, 6)

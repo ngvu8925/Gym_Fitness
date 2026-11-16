@@ -53,6 +53,39 @@ namespace GymManagement.Api.Services
             return (true, "Login successful", result);
         }
 
+        public (bool Success, string Message) ChangePassword(int accountId, ChangePasswordRequest req)
+        {
+            if (req == null
+                || string.IsNullOrWhiteSpace(req.CurrentPassword)
+                || string.IsNullOrWhiteSpace(req.NewPassword)
+                || string.IsNullOrWhiteSpace(req.ConfirmNewPassword))
+                return (false, "Current password, new password and confirmation are required");
+
+            // Policy giống khi đăng kí: mật khẩu tối thiểu 6 ký tự.
+            if (req.NewPassword.Length < 6)
+                return (false, "Password must be at least 6 characters");
+
+            if (req.NewPassword != req.ConfirmNewPassword)
+                return (false, "New password and confirmation do not match");
+
+            string? storedHash = _repo.GetPasswordHash(accountId);
+            if (storedHash == null)
+                return (false, "Account not found");
+
+            // Verify mật khẩu hiện tại (hỗ trợ cả hash legacy như khi đăng nhập).
+            if (!IsPasswordValid(req.CurrentPassword, storedHash, out var upgradeHash))
+                return (false, "Current password is incorrect");
+
+            // Mật khẩu mới phải khác mật khẩu hiện tại.
+            if (upgradeHash == null && PasswordHelper.Verify(req.NewPassword, storedHash))
+                return (false, "New password must be different from the current password");
+
+            string newHash = PasswordHelper.Hash(req.NewPassword);
+            _repo.UpdatePasswordHash(accountId, newHash);
+
+            return (true, "Password changed successfully");
+        }
+
         private bool IsPasswordValid(string password, string storedHash, out string? upgradeHash)
         {
             upgradeHash = null;

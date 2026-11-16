@@ -64,6 +64,18 @@ namespace GymManagement.Api.Repositories
             return dt.Rows.Count == 0 ? null : Convert.ToInt32(dt.Rows[0][0]);
         }
 
+        /// <summary>
+        /// Lấy password hash của tài khoản (dùng cho đổi mật khẩu).
+        /// </summary>
+        public string? GetPasswordHash(int accountId)
+        {
+            DataTable dt = _db.ExecuteQuery(
+                "SELECT Password FROM Accounts WHERE AccountId = @AccountId",
+                new SqlParameter[] { new SqlParameter("@AccountId", accountId) },
+                isStoredProcedure: false);
+            return dt.Rows.Count == 0 ? null : dt.Rows[0]["Password"]?.ToString();
+        }
+
         public int Register(string username, string passwordHash, string fullName,
             string? phone, string? email)
         {

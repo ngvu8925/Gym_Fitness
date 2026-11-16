@@ -998,7 +998,28 @@
 
         <!-- TAB 4: MY PROFILE -->
         <section id="tabProfile" class="tab-panel">
-            <div class="panel-box" style="max-width: 700px;">
+            <div class="panel-box" style="max-width: 700px; margin-top: 20px;">
+                <h3>🔒 Đổi mật khẩu</h3>
+                <form id="passwordForm" onsubmit="changeMyPassword(event)">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label>Mật khẩu hiện tại</label>
+                            <input id="pwdCurrent" type="password" required>
+                        </div>
+                        <div class="field">
+                            <label>Mật khẩu mới (tối thiểu 6 ký tự)</label>
+                            <input id="pwdNew" type="password" required minlength="6">
+                        </div>
+                        <div class="field">
+                            <label>Nhập lại mật khẩu mới</label>
+                            <input id="pwdConfirm" type="password" required minlength="6">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn secondary" style="margin-top: 6px;">Cập nhật mật khẩu</button>
+                </form>
+            </div>
+
+            <div class="panel-box" style="max-width: 700px; margin-top: 20px;">
                 <h3>Cập nhật Hồ sơ cá nhân</h3>
                 <form id="profileForm" onsubmit="updateProfile(event)">
                     <div class="form-grid">
@@ -1607,6 +1628,44 @@
             // Check registrations
             toast('Đã ghi nhận yêu cầu tạm ngưng gói tập: ' + reason);
             document.getElementById('pauseReasonInput').value = '';
+        }
+
+        // ===== ĐỔI MẬT KHẨU =====
+        async function changeMyPassword(e) {
+            e.preventDefault();
+            const currentPassword = document.getElementById('pwdCurrent').value;
+            const newPassword = document.getElementById('pwdNew').value;
+            const confirmNewPassword = document.getElementById('pwdConfirm').value;
+
+            if (!currentPassword || !newPassword || !confirmNewPassword) {
+                toast('Vui lòng nhập đủ 3 ô mật khẩu!', false);
+                return;
+            }
+            if (newPassword.length < 6) {
+                toast('Mật khẩu mới phải có tối thiểu 6 ký tự!', false);
+                return;
+            }
+            if (newPassword !== confirmNewPassword) {
+                toast('Mật khẩu mới nhập lại không khớp!', false);
+                return;
+            }
+            if (newPassword === currentPassword) {
+                toast('Mật khẩu mới phải khác mật khẩu hiện tại!', false);
+                return;
+            }
+
+            const data = await api('POST', '/api/auth/change-password', {
+                currentPassword: currentPassword,
+                newPassword: newPassword,
+                confirmNewPassword: confirmNewPassword
+            });
+
+            if (data) {
+                toast(data.message || 'Đổi mật khẩu thành công!');
+                document.getElementById('pwdCurrent').value = '';
+                document.getElementById('pwdNew').value = '';
+                document.getElementById('pwdConfirm').value = '';
+            }
         }
 
         async function updateProfile(e) {

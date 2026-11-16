@@ -436,6 +436,15 @@
                     <button class="btn primary" onclick="login()">Login</button>
                 </form>
             </div>
+            <div class="panel">
+                <h2>Change password (Admin)</h2>
+                <form class="row" onsubmit="return false;">
+                    <input id="admPwdCurrent" type="password" placeholder="Current password">
+                    <input id="admPwdNew" type="password" placeholder="New password (min 6)">
+                    <input id="admPwdConfirm" type="password" placeholder="Confirm new password">
+                    <button class="btn primary" onclick="changeAdminPassword()">Update password</button>
+                </form>
+            </div>
         </section>
 
         <section id="tabMembers" class="tab">
@@ -748,6 +757,30 @@ async function login() {
             document.getElementById('loginStatus').textContent = data.fullName + ' · ' + data.role;
             toast('Đăng nhập thành công (' + data.role + ')');
             await initializeAdmin();
+          }
+}
+
+async function changeAdminPassword() {
+          const currentPassword = document.getElementById('admPwdCurrent').value;
+          const newPassword = document.getElementById('admPwdNew').value;
+          const confirmNewPassword = document.getElementById('admPwdConfirm').value;
+
+          if (!currentPassword || !newPassword || !confirmNewPassword) { toast('Please fill in all 3 password fields.', false); return; }
+          if (newPassword.length < 6) { toast('New password must be at least 6 characters.', false); return; }
+          if (newPassword !== confirmNewPassword) { toast('New password and confirmation do not match.', false); return; }
+          if (newPassword === currentPassword) { toast('New password must be different from the current one.', false); return; }
+
+          const data = await api('POST', '/api/auth/change-password', {
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+            confirmNewPassword: confirmNewPassword
+          });
+
+          if (data) {
+            toast(data.message || 'Password changed successfully.');
+            document.getElementById('admPwdCurrent').value = '';
+            document.getElementById('admPwdNew').value = '';
+            document.getElementById('admPwdConfirm').value = '';
           }
 }
 

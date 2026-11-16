@@ -174,5 +174,92 @@ namespace GymManagement.Api.Tests
             Assert.Throws<AppException>(() => service.Register("nguoidung", "123456", "Nguyen Van A", null, null));
         }
     }
+
+    public class ChangePasswordTests
+    {
+        private static AccountService TaoService(Mock<IAccountRepository> repo)
+        {
+            return new AccountService(
+                repo.Object,
+                new Mock<IMemberRepository>().Object,
+                new Mock<IMemberAccountRepository>().Object);
+        }
+
+        private static ChangePasswordRequest TaoReq(string current, string newPass, string confirm)
+        {
+            return new ChangePasswordRequest
+            {
+                CurrentPassword = current,
+                NewPassword = newPass,
+                ConfirmNewPassword = confirm
+            };
+        }
+
+        [Fact]
+        public void DoiMatKhau_HopLe_UpdateHashBcryptMoi()
+        {
+            var repo = new Mock<IAccountRepository>();
+            repo.Setup(r => r.GetPasswordHash(1)).Returns(PasswordHelper.Hash("Cu@123"));
+
+            var service = TaoService(repo);
+            var (success, _) = service.ChangePassword(1, TaoReq("Cu@123", "Moi@456", "Moi@456"));
+
+            Assert.True(success);
+            // Hash mới phải là BCrypt của mật khẩu mới, KHÔNG phải plaintext
+            repo.Verify(r => r.UpdatePasswordHash(1, It.Is<string>(h => h.StartsWith("$2"))), Times.Once);
+        }
+
+        [Fact]
+        public void DoiMatKhau_MatKhauCuSai_KhongUpdate()
+        {
+            var repo = new Mock<IAccountRepository>();
+            repo.Setup(r => r.GetPasswordHash(1)).Returns(PasswordHelper.Hash("Cu@123"));
+
+            var service = TaoService(repo);
+            var (success, _) = service.ChangePassword(1, TaoReq("Sai@123", "Moi@456", "Moi@456"));
+
+            Assert.False(success);
+            repo.Verify(r => r.UpdatePasswordHash(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public void DoiMatKhau_MatKhauMoiQuaNgon_KhongUpdate()
+        {
+            var repo = new Mock<IAccountRepository>();
+
+            var service = TaoService(repo);
+            var (success, _) = service.ChangePassword(1, TaoReq("Cu@123", "123", "123"));
+
+            Assert.False(success);
+            repo.Verify(r => r.GetPasswordHash(It.IsAny<int>()), Times.Never);
+            repo.Verify(r => r.UpdatePasswordHash(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public void DoiMatKhau_XacNhanKhongKhop_KhongUpdate()
+        {
+            var repo = new Mock<IAccountRepository>();
+
+            var service = TaoService(repo);
+            var (success, _) = service.ChangePassword(1, TaoReq("Cu@123", "Moi@456", "Khac@789"));
+
+            Assert.False(success);
+            repo.Verify(r => r.GetPasswordHash(It.IsAny<int>()), Times.Never);
+            repo.Verify(r => r.UpdatePasswordHash(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public void DoiMatKhau_MatKhauMoiTrungCu_KhongUpdate()
+        {
+            var repo = new Mock<IAccountRepository>();
+            repo.Setup(r => r.GetPasswordHash(1)).Returns(PasswordHelper.Hash("Cu@123"));
+
+            var service = TaoService(repo);
+            var (success, _) = service.ChangePassword(1, TaoReq("Cu@123", "Cu@123", "Cu@123"));
+
+            Assert.False(success);
+            repo.Verify(r => r.UpdatePasswordHash(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        }
+    }
 }
 

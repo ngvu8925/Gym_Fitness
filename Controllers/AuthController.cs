@@ -1,5 +1,7 @@
+using GymManagement.Api.Common;
 using GymManagement.Api.DTOs;
 using GymManagement.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymManagement.Api.Controllers
@@ -35,6 +37,22 @@ namespace GymManagement.Api.Controllers
                 role = account.Role,
                 branchId = account.BranchId
             });
+        }
+
+        [HttpPost("change-password")]
+        [Authorize(Roles = "Admin,Member")]
+        public IActionResult ChangePassword([FromBody] ChangePasswordRequest req)
+        {
+            // AccountId luôn lấy từ JWT claims — KHÔNG tin accountId do client gửi.
+            var accountId = User.GetAccountId();
+            if (accountId == null)
+                return Unauthorized(new { message = "Không xác định được tài khoản từ token." });
+
+            var (success, message) = _service.ChangePassword(accountId.Value, req);
+            if (!success)
+                return BadRequest(new { message });
+
+            return Ok(new { message });
         }
 
         [HttpPost("register")]
