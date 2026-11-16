@@ -16,7 +16,8 @@ namespace GymManagement.Api.Repositories
         public DataTable GetByUsername(string username)
         {
             const string sql = @"
-                SELECT AccountId, Username, Password, FullName, Role, BranchId, Status
+                SELECT AccountId, Username, Password, FullName, Role, BranchId, Status,
+                       FailedLoginCount, LockoutEnd
                 FROM Accounts
                 WHERE Username = @Username;";
 
@@ -74,6 +75,40 @@ namespace GymManagement.Api.Repositories
                 new SqlParameter[] { new SqlParameter("@AccountId", accountId) },
                 isStoredProcedure: false);
             return dt.Rows.Count == 0 ? null : dt.Rows[0]["Password"]?.ToString();
+        }
+
+        /// <summary>
+        /// Ghi nhận 1 lần đăng nhập SAI (Task 06): đếm + khóa tạm khi đủ ngưỡng.
+        /// SP trả về FailedLoginCount / LockoutEnd / IsLocked.
+        /// </summary>
+        public DataTable RecordLoginFailed(int accountId, int maxFailedAttempts, int lockoutMinutes)
+        {
+            return _db.ExecuteQuery("sp_Account_LoginFailed", new SqlParameter[]
+            {
+                new SqlParameter("@AccountId", accountId),
+                new SqlParameter("@MaxFailedAttempts", maxFailedAttempts),
+                new SqlParameter("@LockoutMinutes", lockoutMinutes)
+            });
+        }
+
+        /// <summary>Đăng nhập thành công: reset bộ đếm + xóa khóa (sp_Account_LoginSucceeded).</summary>
+        public void RecordLoginSuccess(int accountId)
+        {
+            _db.ExecuteNonQuery("sp_Account_LoginSucceeded", new SqlParameter("@AccountId", accountId));
+        }
+
+        /// <summary>
+        /// Ghi log bảo mật vào bảng SystemLogs (có sẵn). KHÔNG ghi mật khẩu/hash.
+        /// </summary>
+        public void InsertSystemLog(int? accountId, string action, string? tableName, string? description)
+        {
+            _db.ExecuteNonQuery("sp_SystemLog_Insert", new SqlParameter[]
+            {
+                new SqlParameter("@AccountId", (object?)accountId ?? DBNull.Value),
+                new SqlParameter("@Action", action),
+                new SqlParameter("@TableName", (object?)tableName ?? DBNull.Value),
+                new SqlParameter("@Description", (object?)description ?? DBNull.Value)
+            });
         }
 
         public int Register(string username, string passwordHash, string fullName,

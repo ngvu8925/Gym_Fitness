@@ -70,6 +70,9 @@ namespace GymManagement.Api.Repositories
         int Register(string username, string passwordHash, string fullName, string? phone, string? email);
         int? GetDefaultBranchId();
         string? GetPasswordHash(int accountId);
+        DataTable RecordLoginFailed(int accountId, int maxFailedAttempts, int lockoutMinutes);
+        void RecordLoginSuccess(int accountId);
+        void InsertSystemLog(int? accountId, string action, string? tableName, string? description);
     }
 
     public interface IMemberAccountRepository

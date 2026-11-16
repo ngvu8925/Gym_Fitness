@@ -1,8 +1,10 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using GymManagement.Api.Middleware;
 using GymManagement.Api.Models;
 using GymManagement.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
@@ -24,6 +26,10 @@ if (string.IsNullOrWhiteSpace(connectionString))
 // Bind & register JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<JwtService>();
+
+// Bind SecuritySettings (Task 06: khóa tài khoản + rate limiting) + throttle theo username
+builder.Services.Configure<SecuritySettings>(builder.Configuration.GetSection("SecuritySettings"));
+builder.Services.AddSingleton<GymManagement.Api.Common.LoginThrottle>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 if (jwtSettings is null || string.IsNullOrWhiteSpace(jwtSettings.SecretKey))
@@ -59,6 +65,29 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddAuthorization();
+
+// ===== Rate limiting cho endpoint đăng nhập (Task 06) =====
+// Giới hạn theo IP: fixed window 1 phút, trả HTTP 429 + Retry-After khi vượt.
+// Ngưỡng rộng (mặc định 10/phút/IP) để không khóa nhầm người hợp lệ dùng chung IP.
+var securitySettings = builder.Configuration.GetSection("SecuritySettings").Get<SecuritySettings>() ?? new SecuritySettings();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { message = "Too many login attempts. Please try again later." }, cancellationToken);
+    };
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter<string>(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = Math.Max(1, securitySettings.LoginRateLimitPerMinutePerIp),
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
 
 builder.Services.AddSingleton<GymManagement.Api.Repositories.DatabaseHelper>();
 
@@ -150,6 +179,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

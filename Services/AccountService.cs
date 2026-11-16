@@ -11,38 +11,77 @@ namespace GymManagement.Api.Services
         private readonly IAccountRepository _repo;
         private readonly IMemberRepository _memberRepo;
         private readonly IMemberAccountRepository _linkRepo;
+        private readonly Microsoft.Extensions.Options.IOptions<SecuritySettings>? _security;
 
-        public AccountService(IAccountRepository repo, IMemberRepository memberRepo, IMemberAccountRepository linkRepo)
+        public AccountService(IAccountRepository repo, IMemberRepository memberRepo, IMemberAccountRepository linkRepo,
+            Microsoft.Extensions.Options.IOptions<SecuritySettings>? security = null)
         {
             _repo = repo;
             _memberRepo = memberRepo;
             _linkRepo = linkRepo;
+            _security = security;
         }
 
-        public (bool Success, string Message, LoginResult? Account) Login(string username, string password)
+        public (bool Success, string Message, LoginResult? Account) Login(string username, string password, string? ip = null)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return (false, "Please enter both username and password", null);
+
+            var security = _security?.Value ?? new SecuritySettings();
             DataTable dt = _repo.GetByUsername(username);
 
+            // Username không tồn tại: message chung, KHÔNG tiết lộ tài khoản có tồn tại.
             if (dt.Rows.Count == 0)
                 return (false, "Invalid username or password", null);
 
             var row = dt.Rows[0];
+            var accountId = Convert.ToInt32(row["AccountId"]);
+
+            // Đang bị khóa tạm -> tự mở khóa nếu đã qua thời hạn.
+            var lockoutEnd = row.Table.Columns.Contains("LockoutEnd") && row["LockoutEnd"] != DBNull.Value
+                ? (DateTime?)row["LockoutEnd"]
+                : null;
+            if (lockoutEnd.HasValue && lockoutEnd.Value > DateTime.Now)
+            {
+                var minutesLeft = (int)Math.Ceiling((lockoutEnd.Value - DateTime.Now).TotalMinutes);
+                return (false, $"Account temporarily locked due to failed login attempts. Try again after {minutesLeft} minute(s).", null);
+            }
+
             string storedHash = row["Password"]?.ToString() ?? string.Empty;
 
             if (!IsPasswordValid(password, storedHash, out var upgradeHash))
+            {
+                // Ghi nhận lần sai (Task 06); đủ ngưỡng thì khóa tạm.
+                var failed = _repo.RecordLoginFailed(accountId, security.MaxFailedAttempts, security.LockoutMinutes);
+                var isLocked = failed != null && failed.Rows.Count > 0
+                    && failed.Columns.Contains("IsLocked")
+                    && Convert.ToInt32(failed.Rows[0]["IsLocked"]) == 1;
+
+                if (failed != null && failed.Rows.Count > 0 && failed.Columns.Contains("FailedLoginCount"))
+                {
+                    var desc = $"Username='{username}', IP={ip ?? "unknown"}, failedAttempts={failed.Rows[0]["FailedLoginCount"]}";
+                    _repo.InsertSystemLog(accountId, isLocked ? "ACCOUNT_LOCKED" : "LOGIN_FAILED", "Accounts", desc);
+                }
+
+                if (isLocked)
+                    return (false, $"Account temporarily locked due to failed login attempts. Try again after {security.LockoutMinutes} minute(s).", null);
+
                 return (false, "Invalid username or password", null);
+            }
 
             // Tài khoản legacy (SHA-256 cũ) đăng nhập đúng -> nâng cấp lên BCrypt ngay.
             if (upgradeHash != null)
             {
-                _repo.UpdatePasswordHash(Convert.ToInt32(row["AccountId"]), upgradeHash);
+                _repo.UpdatePasswordHash(accountId, upgradeHash);
             }
+
+            // Đăng nhập thành công: reset bộ đếm + xóa khóa + ghi log.
+            _repo.RecordLoginSuccess(accountId);
+            _repo.InsertSystemLog(accountId, "LOGIN_SUCCESS", "Accounts", $"Username='{username}', IP={ip ?? "unknown"}");
 
             var result = new LoginResult
             {
-                AccountId = Convert.ToInt32(row["AccountId"]),
+                AccountId = accountId,
                 FullName = row["FullName"]?.ToString() ?? string.Empty,
                 Role = row["Role"]?.ToString() ?? "User",
                 BranchId = row.Table.Columns.Contains("BranchId") && row["BranchId"] != DBNull.Value

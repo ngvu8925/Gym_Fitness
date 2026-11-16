@@ -62,7 +62,7 @@ namespace GymManagement.Api.Services
 
     public interface IAccountService
     {
-        (bool Success, string Message, LoginResult? Account) Login(string username, string password);
+        (bool Success, string Message, LoginResult? Account) Login(string username, string password, string? ip = null);
         (bool Success, string Message, int AccountId) Register(string username, string password, string fullName, string? phone, string? email);
         (bool Success, string Message) ChangePassword(int accountId, ChangePasswordRequest req);
     }
