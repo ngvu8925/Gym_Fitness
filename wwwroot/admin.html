@@ -496,7 +496,8 @@
                     <input id="pkgMonths" type="number" placeholder="Months" style="width:100px">
                     <input id="pkgPrice" type="number" placeholder="Price" style="width:140px">
                     <input id="pkgDescription" placeholder="Description">
-                    <button class="btn primary" onclick="addPackage()">Save package</button>
+                    <button id="pkgSaveButton" class="btn primary" onclick="addPackage()">Save package</button>
+                    <button id="pkgCancelButton" class="btn ghost" onclick="cancelPackageEdit()" style="display:none">Cancel edit</button>
                 </form>
             </div>
             <div class="panel">
@@ -530,7 +531,8 @@
                     <input id="trainerPhone" placeholder="Phone">
                     <input id="trainerHireDate" type="date">
                     <input id="trainerBranchId" type="number" placeholder="Branch ID" value="1" style="width:120px">
-                    <button class="btn primary" onclick="addTrainer()">Save trainer</button>
+                    <button id="trainerSaveButton" class="btn primary" onclick="addTrainer()">Save trainer</button>
+                    <button id="trainerCancelButton" class="btn ghost" onclick="cancelTrainerEdit()" style="display:none">Cancel edit</button>
                 </form>
                 <button class="btn ghost" onclick="loadTrainers()" style="margin-top:8px">Load trainers</button>
                 <div id="trainerTable"></div>
@@ -545,7 +547,8 @@
                     <input id="classDays" placeholder="Lịch: 2,4,6 (thứ)" style="width:140px" title="Các thứ trong tuần, phân tách bằng dấu phẩy. VD: 2,4,6 = thứ 2, 4, 6. 1 hoặc 8 = Chủ nhật">
                     <input id="classStartTime" type="time" style="width:120px" title="Giờ bắt đầu">
                     <input id="classEndTime" type="time" style="width:120px" title="Giờ kết thúc">
-                    <button class="btn primary" onclick="addClass()">Save class</button>
+                    <button id="classSaveButton" class="btn primary" onclick="addClass()">Save class</button>
+                    <button id="classCancelButton" class="btn ghost" onclick="cancelClassEdit()" style="display:none">Cancel edit</button>
                 </form>
                 <button class="btn ghost" onclick="loadClasses()" style="margin-top:8px">Load classes</button>
                 <div id="classTable"></div>
@@ -604,6 +607,12 @@
 let adminMembers = [];
 let memberAccounts = [];
 let editingMemberId = null;
+let packageRows = [];
+let trainerRows = [];
+let classRows = [];
+let editingPackageId = null;
+let editingTrainerId = null;
+let editingClassId = null;
 
 function baseUrl() { return document.getElementById('baseUrlInput').value.replace(/\/$/, ''); }
 
@@ -643,16 +652,25 @@ function getVal(row, key) {
           return '';
 }
 
-function renderTable(containerId, rows, cols, emptyText) {
+function renderTable(containerId, rows, cols, emptyText, rowActions) {
           const el = document.getElementById(containerId);
           if (!rows || rows.length === 0) {
             el.innerHTML = '<p class="empty">' + (emptyText || 'No data yet. Add a record using the form above.') + '</p>';
             return;
           }
-          let html = '<table><thead><tr>' + cols.map(c => '<th>' + c.label + '</th>').join('') + '</tr></thead><tbody>';
-          for (const row of rows) html += '<tr>' + cols.map(c => '<td>' + getVal(row, c.key) + '</td>').join('') + '</tr>';
+          let html = '<table><thead><tr>' + cols.map(c => '<th>' + c.label + '</th>').join('') + (rowActions ? '<th>Actions</th>' : '') + '</tr></thead><tbody>';
+          for (const row of rows) {
+            const cells = cols.map(c => '<td>' + getVal(row, c.key) + '</td>').join('');
+            const actions = rowActions ? '<td>' + rowActions(row) + '</td>' : '';
+            html += '<tr>' + cells + actions + '</tr>';
+          }
           html += '</tbody></table>';
           el.innerHTML = html;
+}
+
+function actionButtons(editFn, deleteFn, id) {
+          return '<button class="btn ghost" onclick="' + editFn + '(' + id + ')">Edit</button>' +
+                 '<button class="btn ghost" style="margin-left:6px" onclick="' + deleteFn + '(' + id + ')">Delete</button>';
 }
 
 document.getElementById('tabNav').addEventListener('click', (e) => {
@@ -878,24 +896,77 @@ async function saveMemberAccountLink() {
 }
 
 async function addPackage() {
+          const name = document.getElementById('pkgName').value;
+          const months = Number(document.getElementById('pkgMonths').value);
+          const price = Number(document.getElementById('pkgPrice').value);
+          if (!name.trim()) { toast('Package name is required.', false); return; }
+          if (months <= 0) { toast('Months must be greater than 0.', false); return; }
+          if (price < 0) { toast('Price is invalid.', false); return; }
           const body = {
-            name: document.getElementById('pkgName').value,
+            name: name,
             type: document.getElementById('pkgType').value,
-            months: Number(document.getElementById('pkgMonths').value),
-            price: Number(document.getElementById('pkgPrice').value),
+            months: months,
+            price: price,
             description: document.getElementById('pkgDescription').value
           };
-          const data = await api('POST', '/api/packages', body);
-          if (data) { toast('Package saved'); loadPackages(); loadOverview(); }
+          const isEditing = editingPackageId !== null;
+          const data = await api(isEditing ? 'PUT' : 'POST', isEditing ? '/api/packages/' + editingPackageId : '/api/packages', body);
+          if (data) {
+            toast(isEditing ? 'Package updated.' : 'Package saved');
+            cancelPackageEdit();
+            loadPackages();
+            loadOverview();
+          }
+}
+
+function editPackage(packageId) {
+          const pkg = packageRows.find(row => Number(row.packageId) === Number(packageId));
+          if (!pkg) return;
+          editingPackageId = pkg.packageId;
+          document.getElementById('pkgName').value = pkg.packageName || '';
+          document.getElementById('pkgType').value = pkg.packageType || 'ThuongGoi';
+          document.getElementById('pkgMonths').value = pkg.months;
+          document.getElementById('pkgPrice').value = pkg.price;
+          document.getElementById('pkgDescription').value = pkg.description || '';
+          document.getElementById('pkgSaveButton').textContent = 'Update package';
+          document.getElementById('pkgCancelButton').style.display = '';
+          document.getElementById('pkgName').focus();
+}
+
+function cancelPackageEdit() {
+          editingPackageId = null;
+          document.getElementById('pkgName').value = '';
+          document.getElementById('pkgType').value = 'ThuongGoi';
+          document.getElementById('pkgMonths').value = '';
+          document.getElementById('pkgPrice').value = '';
+          document.getElementById('pkgDescription').value = '';
+          document.getElementById('pkgSaveButton').textContent = 'Save package';
+          document.getElementById('pkgCancelButton').style.display = 'none';
+}
+
+async function deletePackage(packageId) {
+          const pkg = packageRows.find(row => Number(row.packageId) === Number(packageId));
+          if (!pkg || !confirm('Delete package "' + pkg.packageName + '" (soft delete)?')) return;
+          const data = await api('DELETE', '/api/packages/' + packageId);
+          if (data) {
+            toast(data.message || 'Package deleted');
+            if (editingPackageId === Number(packageId)) cancelPackageEdit();
+            loadPackages();
+            loadOverview();
+          }
 }
 
 async function loadPackages() {
           const data = await api('GET', '/api/packages?pageSize=100');
-          if (data) renderTable('packageTable', data.items, [
-            { key: 'packageId', label: 'ID' }, { key: 'packageName', label: 'Name' },
-            { key: 'packageType', label: 'Type' }, { key: 'months', label: 'Months' },
-            { key: 'price', label: 'Price' }
-          ], 'No packages yet. Add a package using the form above.');
+          if (data) {
+            packageRows = data.items || [];
+            renderTable('packageTable', packageRows, [
+              { key: 'packageId', label: 'ID' }, { key: 'packageName', label: 'Name' },
+              { key: 'packageType', label: 'Type' }, { key: 'months', label: 'Months' },
+              { key: 'price', label: 'Price' }
+            ], 'No packages yet. Add a package using the form above.',
+               row => actionButtons('editPackage', 'deletePackage', row.packageId));
+          }
 }
 
 async function registerPackage() {
@@ -912,26 +983,75 @@ async function registerPackage() {
 }
 
 async function addTrainer() {
+          const fullName = document.getElementById('trainerFullName').value;
+          if (!fullName.trim()) { toast('Trainer name is required.', false); return; }
           const body = {
             branchId: Number(document.getElementById('trainerBranchId').value) || null,
-            fullName: document.getElementById('trainerFullName').value,
+            fullName: fullName,
             specialty: document.getElementById('trainerSpecialty').value,
             phone: document.getElementById('trainerPhone').value,
             hireDate: document.getElementById('trainerHireDate').value || null
           };
-          const data = await api('POST', '/api/trainers', body);
-          if (data) { toast('Trainer saved'); loadTrainers(); }
+          const isEditing = editingTrainerId !== null;
+          const data = await api(isEditing ? 'PUT' : 'POST', isEditing ? '/api/trainers/' + editingTrainerId : '/api/trainers', body);
+          if (data) {
+            toast(isEditing ? 'Trainer updated.' : 'Trainer saved');
+            cancelTrainerEdit();
+            loadTrainers();
+          }
+}
+
+function editTrainer(trainerId) {
+          const trainer = trainerRows.find(row => Number(row.trainerId) === Number(trainerId));
+          if (!trainer) return;
+          editingTrainerId = trainer.trainerId;
+          document.getElementById('trainerFullName').value = trainer.fullName || '';
+          document.getElementById('trainerSpecialty').value = trainer.specialty || '';
+          document.getElementById('trainerPhone').value = trainer.phone || '';
+          document.getElementById('trainerHireDate').value = trainer.hireDate ? String(trainer.hireDate).substring(0, 10) : '';
+          document.getElementById('trainerBranchId').value = trainer.branchId || 1;
+          document.getElementById('trainerSaveButton').textContent = 'Update trainer';
+          document.getElementById('trainerCancelButton').style.display = '';
+          document.getElementById('trainerFullName').focus();
+}
+
+function cancelTrainerEdit() {
+          editingTrainerId = null;
+          document.getElementById('trainerFullName').value = '';
+          document.getElementById('trainerSpecialty').value = '';
+          document.getElementById('trainerPhone').value = '';
+          document.getElementById('trainerHireDate').value = '';
+          document.getElementById('trainerBranchId').value = '1';
+          document.getElementById('trainerSaveButton').textContent = 'Save trainer';
+          document.getElementById('trainerCancelButton').style.display = 'none';
+}
+
+async function deleteTrainer(trainerId) {
+          const trainer = trainerRows.find(row => Number(row.trainerId) === Number(trainerId));
+          if (!trainer || !confirm('Delete trainer "' + trainer.fullName + '" (soft delete)?')) return;
+          const data = await api('DELETE', '/api/trainers/' + trainerId);
+          if (data) {
+            toast(data.message || 'Trainer deleted');
+            if (editingTrainerId === Number(trainerId)) cancelTrainerEdit();
+            loadTrainers();
+          }
 }
 
 async function loadTrainers() {
           const data = await api('GET', '/api/trainers?pageSize=100');
-          if (data) renderTable('trainerTable', data.items, [
-            { key: 'trainerId', label: 'ID' }, { key: 'fullName', label: 'Full name' },
-            { key: 'specialty', label: 'Specialty' }, { key: 'phone', label: 'Phone' }
-          ], 'No trainers yet. Add one using the form above.');
+          if (data) {
+            trainerRows = data.items || [];
+            renderTable('trainerTable', trainerRows, [
+              { key: 'trainerId', label: 'ID' }, { key: 'fullName', label: 'Full name' },
+              { key: 'specialty', label: 'Specialty' }, { key: 'phone', label: 'Phone' }
+            ], 'No trainers yet. Add one using the form above.',
+               row => actionButtons('editTrainer', 'deleteTrainer', row.trainerId));
+          }
 }
 
 async function addClass() {
+          const name = document.getElementById('className').value;
+          if (!name.trim()) { toast('Class name is required.', false); return; }
           const days = document.getElementById('classDays').value.trim() || null;
           const startTime = document.getElementById('classStartTime').value || null;
           const endTime = document.getElementById('classEndTime').value || null;
@@ -941,15 +1061,62 @@ async function addClass() {
           }
           const body = {
             branchId: Number(document.getElementById('classBranchId').value) || null,
-            name: document.getElementById('className').value,
+            name: name,
             trainerId: Number(document.getElementById('classTrainerId').value) || null,
             capacity: Number(document.getElementById('classCapacity').value) || 20,
             daysOfWeek: days,
             startTime: startTime ? startTime + ':00' : null,
             endTime: endTime ? endTime + ':00' : null
           };
-          const data = await api('POST', '/api/classes', body);
-          if (data) { toast('Class saved'); loadClasses(); loadOverview(); }
+          const isEditing = editingClassId !== null;
+          const data = await api(isEditing ? 'PUT' : 'POST', isEditing ? '/api/classes/' + editingClassId : '/api/classes', body);
+          if (data) {
+            toast(isEditing ? 'Class updated.' : 'Class saved');
+            cancelClassEdit();
+            loadClasses();
+            loadOverview();
+          }
+}
+
+function editClass(classId) {
+          const cls = classRows.find(row => Number(row.classId) === Number(classId));
+          if (!cls) return;
+          editingClassId = cls.classId;
+          document.getElementById('className').value = cls.className || '';
+          document.getElementById('classTrainerId').value = cls.trainerId || '';
+          document.getElementById('classCapacity').value = cls.capacity || 20;
+          document.getElementById('classBranchId').value = cls.branchId || 1;
+          document.getElementById('classDays').value = cls.daysOfWeek || '';
+          document.getElementById('classStartTime').value = cls.startTime ? String(cls.startTime).split(':').slice(0, 2).join(':') : '';
+          document.getElementById('classEndTime').value = cls.endTime ? String(cls.endTime).split(':').slice(0, 2).join(':') : '';
+          document.getElementById('classSaveButton').textContent = 'Update class';
+          document.getElementById('classCancelButton').style.display = '';
+          document.getElementById('className').focus();
+}
+
+function cancelClassEdit() {
+          editingClassId = null;
+          document.getElementById('className').value = '';
+          document.getElementById('classTrainerId').value = '';
+          document.getElementById('classCapacity').value = '20';
+          document.getElementById('classBranchId').value = '1';
+          document.getElementById('classDays').value = '';
+          document.getElementById('classStartTime').value = '';
+          document.getElementById('classEndTime').value = '';
+          document.getElementById('classSaveButton').textContent = 'Save class';
+          document.getElementById('classCancelButton').style.display = 'none';
+}
+
+async function deleteClass(classId) {
+          const cls = classRows.find(row => Number(row.classId) === Number(classId));
+          if (!cls || !confirm('Delete class "' + cls.className + '" (soft delete)?')) return;
+          const data = await api('DELETE', '/api/classes/' + classId);
+          if (data) {
+            toast(data.message || 'Class deleted');
+            if (editingClassId === Number(classId)) cancelClassEdit();
+            loadClasses();
+            loadOverview();
+          }
 }
 
 function formatSchedule(c) {
@@ -964,11 +1131,15 @@ function formatSchedule(c) {
 
 async function loadClasses() {
           const data = await api('GET', '/api/classes?pageSize=100');
-          if (data) renderTable('classTable', (data.items || []).map(c => ({ ...c, schedule: formatSchedule(c) })), [
-            { key: 'classId', label: 'ID' }, { key: 'className', label: 'Class' },
-            { key: 'trainerName', label: 'Trainer' }, { key: 'capacity', label: 'Capacity' },
-            { key: 'schedule', label: 'Schedule' }
-          ], 'No classes yet. Add one using the form above.');
+          if (data) {
+            classRows = data.items || [];
+            renderTable('classTable', classRows.map(c => ({ ...c, schedule: formatSchedule(c) })), [
+              { key: 'classId', label: 'ID' }, { key: 'className', label: 'Class' },
+              { key: 'trainerName', label: 'Trainer' }, { key: 'capacity', label: 'Capacity' },
+              { key: 'schedule', label: 'Schedule' }
+            ], 'No classes yet. Add one using the form above.',
+               row => actionButtons('editClass', 'deleteClass', row.classId));
+          }
 }
 
 async function checkIn() {
