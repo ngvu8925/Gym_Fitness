@@ -52,6 +52,18 @@ namespace GymManagement.Api.Repositories
             return dt.Rows.Count > 0;
         }
 
+        /// <summary>
+        /// Chi nhánh mặc định (BranchId nhỏ nhất) để gán cho hồ sơ hội viên tự đăng kí.
+        /// </summary>
+        public int? GetDefaultBranchId()
+        {
+            DataTable dt = _db.ExecuteQuery(
+                "SELECT TOP 1 BranchId FROM Branches ORDER BY BranchId",
+                Array.Empty<SqlParameter>(),
+                isStoredProcedure: false);
+            return dt.Rows.Count == 0 ? null : Convert.ToInt32(dt.Rows[0][0]);
+        }
+
         public int Register(string username, string passwordHash, string fullName,
             string? phone, string? email)
         {

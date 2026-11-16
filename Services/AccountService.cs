@@ -1,5 +1,7 @@
 using System.Data;
+using GymManagement.Api.Common.Exceptions;
 using GymManagement.Api.DTOs;
+using GymManagement.Api.Models;
 using GymManagement.Api.Repositories;
 
 namespace GymManagement.Api.Services
@@ -7,8 +9,15 @@ namespace GymManagement.Api.Services
     public class AccountService : IAccountService
     {
         private readonly IAccountRepository _repo;
+        private readonly IMemberRepository _memberRepo;
+        private readonly IMemberAccountRepository _linkRepo;
 
-        public AccountService(IAccountRepository repo) => _repo = repo;
+        public AccountService(IAccountRepository repo, IMemberRepository memberRepo, IMemberAccountRepository linkRepo)
+        {
+            _repo = repo;
+            _memberRepo = memberRepo;
+            _linkRepo = linkRepo;
+        }
 
         public (bool Success, string Message, LoginResult? Account) Login(string username, string password)
         {
@@ -77,6 +86,21 @@ namespace GymManagement.Api.Services
 
             string hash = PasswordHelper.Hash(password);
             int accountId = _repo.Register(username, hash, fullName, phone, email);
+
+            // Tự tạo hồ sơ hội viên + gán chi nhánh mặc định + liên kết với tài khoản,
+            // để hội viên đăng nhập là dùng được portal ngay, không cần admin can thiệp.
+            int memberId = _memberRepo.Add(new MemberRequest
+            {
+                FullName = fullName,
+                Phone = phone,
+                Email = email,
+                BranchId = _repo.GetDefaultBranchId()
+            });
+
+            int linkResult = _linkRepo.Link(memberId, accountId);
+            if (linkResult != 0)
+                throw new AppException(
+                    "Tài khoản đã tạo nhưng không liên kết được với hồ sơ hội viên. Vui lòng liên hệ quản trị viên.", 500);
 
             return (true, "Registration successful", accountId);
         }

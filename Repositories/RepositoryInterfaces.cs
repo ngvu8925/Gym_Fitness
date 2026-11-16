@@ -63,6 +63,7 @@ namespace GymManagement.Api.Repositories
         void UpdatePasswordHash(int accountId, string passwordHash);
         bool UsernameExists(string username);
         int Register(string username, string passwordHash, string fullName, string? phone, string? email);
+        int? GetDefaultBranchId();
     }
 
     public interface IMemberAccountRepository

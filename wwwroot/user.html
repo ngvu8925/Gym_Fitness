@@ -757,6 +757,8 @@
             ⚠️ Trang này chỉ dành cho tài khoản <strong>Hội viên</strong>. Nếu bạn là <strong>Admin</strong>, vui lòng đăng nhập tại <a href="admin.html" style="color: var(--volt);">admin.html</a>.
         </div>
 
+        <!-- FORM ĐĂNG NHẬP -->
+        <div id="loginFieldsWrap">
         <div class="field" style="margin-bottom: 14px;">
             <label>Tên đăng nhập</label>
             <input id="userLoginUsername" type="text" value="member1" placeholder="Nhập tên đăng nhập">
@@ -774,7 +776,48 @@
             ⚡ 1-Click Đăng nhập ngay (member1 / 123123)
         </button>
 
+        </div>
+
+        <!-- FORM ĐĂNG KÍ (mới) -->
+        <div id="registerFieldsWrap" style="display: none;">
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Họ và tên <span style="color: var(--coral);">*</span></label>
+                <input id="regFullName" type="text" placeholder="VD: Nguyen Van A">
+            </div>
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Số điện thoại</label>
+                <input id="regPhone" type="text" placeholder="VD: 0901234567">
+            </div>
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Email</label>
+                <input id="regEmail" type="email" placeholder="VD: anva@gmail.com">
+            </div>
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Tên đăng nhập <span style="color: var(--coral);">*</span> (tối thiểu 4 ký tự)</label>
+                <input id="regUsername" type="text" placeholder="VD: anva2024">
+            </div>
+            <div class="field" style="margin-bottom: 14px;">
+                <label>Mật khẩu <span style="color: var(--coral);">*</span> (tối thiểu 6 ký tự)</label>
+                <input id="regPassword" type="password" placeholder="Nhập mật khẩu">
+            </div>
+            <div class="field" style="margin-bottom: 20px;">
+                <label>Nhập lại mật khẩu <span style="color: var(--coral);">*</span></label>
+                <input id="regPassword2" type="password" placeholder="Nhập lại mật khẩu">
+            </div>
+
+            <button class="btn primary" style="width: 100%; padding: 12px; margin-bottom: 12px; font-size: 15px;" onclick="memberRegister()">
+                ✨ Tạo tài khoản hội viên
+            </button>
+        </div>
+
         <div style="text-align: center; border-top: 1px solid var(--line); padding-top: 16px;">
+            <a id="switchToRegister" href="#" style="color: var(--volt); font-size: 13px; text-decoration: none; font-weight: 500;" onclick="toggleAuthForm('register'); return false;">
+                🆕 Chưa có tài khoản? <strong>Đăng ký ngay</strong>
+            </a>
+            <a id="switchToLogin" href="#" style="display: none; color: var(--volt); font-size: 13px; text-decoration: none; font-weight: 500;" onclick="toggleAuthForm('login'); return false;">
+                ← Đã có tài khoản? Quay lại <strong>Đăng nhập</strong>
+            </a>
+            <br>
             <a href="admin.html" style="color: var(--steel); font-size: 13px; text-decoration: none; font-weight: 500;">← Quay lại trang Quản trị (Admin Dashboard)</a>
         </div>
     </div>
@@ -1092,6 +1135,66 @@
         function closeModal(id) {
             const modal = document.getElementById(id);
             if (modal) modal.classList.remove('open');
+        }
+
+        // ===== ĐĂNG KÍ HỘI VIÊN =====
+        function toggleAuthForm(mode) {
+            const isRegister = mode === 'register';
+            document.getElementById('loginFieldsWrap').style.display = isRegister ? 'none' : 'block';
+            document.getElementById('registerFieldsWrap').style.display = isRegister ? 'block' : 'none';
+            document.getElementById('switchToRegister').style.display = isRegister ? 'none' : 'inline';
+            document.getElementById('switchToLogin').style.display = isRegister ? 'inline' : 'none';
+            document.getElementById('authSectionTitle').innerHTML = isRegister
+                ? 'ĐĂNG KÍ <span style="color: var(--volt);">HỘI VIÊN</span>'
+                : 'ĐĂNG NHẬP <span style="color: var(--volt);">HỘI VIÊN</span>';
+            document.getElementById('authSectionSubtitle').textContent = isRegister
+                ? 'Tạo tài khoản trong 1 phút — đăng nhập là tập được ngay'
+                : 'Cổng thông tin tập luyện & thẻ hội viên Gym Fitness';
+            const banner = document.getElementById('adminNoticeBanner');
+            if (banner && banner.style.display === 'block') banner.style.display = 'none';
+        }
+
+        async function memberRegister() {
+            const fullName = document.getElementById('regFullName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const password2 = document.getElementById('regPassword2').value;
+
+            if (!fullName || !username || !password) {
+                toast('Vui lòng nhập đầy đủ Họ tên, Tên đăng nhập và Mật khẩu!', false);
+                return;
+            }
+            if (username.length < 4) {
+                toast('Tên đăng nhập phải có tối thiểu 4 ký tự!', false);
+                return;
+            }
+            if (password.length < 6) {
+                toast('Mật khẩu phải có tối thiểu 6 ký tự!', false);
+                return;
+            }
+            if (password !== password2) {
+                toast('Mật khẩu nhập lại không khớp!', false);
+                return;
+            }
+
+            const data = await api('POST', '/api/auth/register', {
+                username: username,
+                password: password,
+                fullName: fullName,
+                phone: phone || null,
+                email: email || null
+            });
+
+            if (data) {
+                toast('🎉 Tạo tài khoản thành công! Đang đăng nhập...');
+                // Tự đăng nhập luôn bằng tài khoản vừa tạo
+                document.getElementById('userLoginUsername').value = username;
+                document.getElementById('userLoginPassword').value = password;
+                toggleAuthForm('login');
+                await memberLogin();
+            }
         }
 
         function showMemberLogin(isAdmin = false) {
