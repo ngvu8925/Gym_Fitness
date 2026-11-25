@@ -134,5 +134,13 @@ namespace GymManagement.Api.Repositories
             DataTable dt = _db.ExecuteQuery(sql, ps, isStoredProcedure: false);
             return Convert.ToInt32(dt.Rows[0][0]);
         }
+
+        public void DeleteAccount(int accountId)
+        {
+            _db.ExecuteNonQuery(
+                "DELETE FROM Accounts WHERE AccountId = @AccountId",
+                new SqlParameter[] { new SqlParameter("@AccountId", accountId) },
+                isStoredProcedure: false);
+        }
     }
 }

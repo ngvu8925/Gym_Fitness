@@ -105,6 +105,7 @@ BEGIN
     IF @Page IS NULL
     BEGIN
         SELECT c.ClassId, c.ClassName, c.Capacity, c.BranchId,
+               c.DaysOfWeek, c.StartTime, c.EndTime,
                t.TrainerId, t.FullName AS TrainerName
         FROM dbo.Classes c
         LEFT JOIN dbo.Trainers t ON t.TrainerId = c.TrainerId
@@ -118,6 +119,7 @@ BEGIN
 
     IF @SortDir = 'DESC'
         SELECT c.ClassId, c.ClassName, c.Capacity, c.BranchId,
+               c.DaysOfWeek, c.StartTime, c.EndTime,
                t.TrainerId, t.FullName AS TrainerName,
                COUNT(*) OVER() AS TotalCount
         FROM dbo.Classes c
@@ -128,6 +130,7 @@ BEGIN
         OFFSET @Skip ROWS FETCH NEXT @PageSize ROWS ONLY;
     ELSE
         SELECT c.ClassId, c.ClassName, c.Capacity, c.BranchId,
+               c.DaysOfWeek, c.StartTime, c.EndTime,
                t.TrainerId, t.FullName AS TrainerName,
                COUNT(*) OVER() AS TotalCount
         FROM dbo.Classes c

@@ -73,6 +73,7 @@ namespace GymManagement.Api.Repositories
         DataTable RecordLoginFailed(int accountId, int maxFailedAttempts, int lockoutMinutes);
         void RecordLoginSuccess(int accountId);
         void InsertSystemLog(int? accountId, string action, string? tableName, string? description);
+        void DeleteAccount(int accountId);
     }
 
     public interface IMemberAccountRepository

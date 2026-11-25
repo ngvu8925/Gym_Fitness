@@ -57,6 +57,8 @@ namespace GymManagement.Api.Services
                 return (false, "Class name is required", 0);
             if (req.Capacity <= 0)
                 return (false, "Capacity must be greater than 0", 0);
+            if (req.StartTime.HasValue && req.EndTime.HasValue && req.EndTime.Value <= req.StartTime.Value)
+                return (false, "End time must be after start time", 0);
 
             int classId = _repo.Add(req);
             return (true, "Class added successfully", classId);
@@ -68,6 +70,8 @@ namespace GymManagement.Api.Services
                 return (false, "Class name is required");
             if (req.Capacity <= 0)
                 return (false, "Capacity must be greater than 0");
+            if (req.StartTime.HasValue && req.EndTime.HasValue && req.EndTime.Value <= req.StartTime.Value)
+                return (false, "End time must be after start time");
 
             _repo.Update(classId, req);
             return (true, "Class updated successfully");

@@ -143,6 +143,10 @@
             color: var(--volt);
         }
 
+        #memberTable, #packageTable, #trainerTable, #classTable, #branchTable, #bestSellingTable {
+            overflow-x: auto;
+        }
+
         main {
             flex: 1;
             padding: 32px 40px 60px;
@@ -401,7 +405,7 @@
             <label>API address</label>
             <input id="baseUrlInput" value="http://localhost:5268">
             <span id="loginStatus">Not signed in</span>
-            <button class="btn ghost" onclick="logout()" style="margin-top: 8px; width: 100%;">Log out</button>
+            <button class="btn ghost" onclick="logout()" style="margin-top: 8px; width: 100%; color: #f3f5f8; border-color: #3f4654; background: #262b35;">Log out</button>
         </div>
     </aside>
 

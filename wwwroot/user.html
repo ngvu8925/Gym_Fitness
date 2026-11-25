@@ -109,7 +109,7 @@
 
         .btn-switch:hover {
             background: var(--volt);
-            color: var(--ink);
+            color: #111318;
             border-color: var(--volt);
         }
 
@@ -749,8 +749,8 @@
     <!-- Member Login Section -->
     <div id="memberLoginSection" style="display: none; max-width: 440px; margin: 50px auto; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 32px; box-shadow: 0 16px 40px rgba(0,0,0,0.5);">
         <div style="text-align: center; margin-bottom: 24px;">
-            <div style="font-family: 'Oswald', sans-serif; font-size: 28px; color: #fff;">ĐĂNG NHẬP <span style="color: var(--volt);">HỘI VIÊN</span></div>
-            <p style="color: var(--steel); font-size: 13px; margin-top: 6px;">Cổng thông tin tập luyện & thẻ hội viên Gym Fitness</p>
+            <div id="authSectionTitle" style="font-family: 'Oswald', sans-serif; font-size: 28px; color: #fff;">ĐĂNG NHẬP <span style="color: var(--volt);">HỘI VIÊN</span></div>
+            <p id="authSectionSubtitle" style="color: var(--steel); font-size: 13px; margin-top: 6px;">Cổng thông tin tập luyện & thẻ hội viên Gym Fitness</p>
         </div>
 
         <div id="adminNoticeBanner" style="display: none; background: rgba(255, 90, 54, 0.15); border: 1px solid var(--coral); color: #ff8566; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 18px; line-height: 1.5;">
@@ -1165,12 +1165,18 @@
             document.getElementById('registerFieldsWrap').style.display = isRegister ? 'block' : 'none';
             document.getElementById('switchToRegister').style.display = isRegister ? 'none' : 'inline';
             document.getElementById('switchToLogin').style.display = isRegister ? 'inline' : 'none';
-            document.getElementById('authSectionTitle').innerHTML = isRegister
-                ? 'ĐĂNG KÍ <span style="color: var(--volt);">HỘI VIÊN</span>'
-                : 'ĐĂNG NHẬP <span style="color: var(--volt);">HỘI VIÊN</span>';
-            document.getElementById('authSectionSubtitle').textContent = isRegister
-                ? 'Tạo tài khoản trong 1 phút — đăng nhập là tập được ngay'
-                : 'Cổng thông tin tập luyện & thẻ hội viên Gym Fitness';
+            const titleEl = document.getElementById('authSectionTitle');
+            if (titleEl) {
+                titleEl.innerHTML = isRegister
+                    ? 'ĐĂNG KÍ <span style="color: var(--volt);">HỘI VIÊN</span>'
+                    : 'ĐĂNG NHẬP <span style="color: var(--volt);">HỘI VIÊN</span>';
+            }
+            const subtitleEl = document.getElementById('authSectionSubtitle');
+            if (subtitleEl) {
+                subtitleEl.textContent = isRegister
+                    ? 'Tạo tài khoản trong 1 phút — đăng nhập là tập được ngay'
+                    : 'Cổng thông tin tập luyện & thẻ hội viên Gym Fitness';
+            }
             const banner = document.getElementById('adminNoticeBanner');
             if (banner && banner.style.display === 'block') banner.style.display = 'none';
         }

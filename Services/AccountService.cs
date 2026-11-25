@@ -37,6 +37,13 @@ namespace GymManagement.Api.Services
             var row = dt.Rows[0];
             var accountId = Convert.ToInt32(row["AccountId"]);
 
+            // Chặn tài khoản đã bị vô hiệu hóa (Status = 0).
+            if (row.Table.Columns.Contains("Status") && row["Status"] != DBNull.Value
+                && !Convert.ToBoolean(row["Status"]))
+            {
+                return (false, "Account is deactivated. Please contact the administrator.", null);
+            }
+
             // Đang bị khóa tạm -> tự mở khóa nếu đã qua thời hạn.
             var lockoutEnd = row.Table.Columns.Contains("LockoutEnd") && row["LockoutEnd"] != DBNull.Value
                 ? (DateTime?)row["LockoutEnd"]
@@ -115,8 +122,9 @@ namespace GymManagement.Api.Services
             if (!IsPasswordValid(req.CurrentPassword, storedHash, out var upgradeHash))
                 return (false, "Current password is incorrect");
 
-            // Mật khẩu mới phải khác mật khẩu hiện tại.
-            if (upgradeHash == null && PasswordHelper.Verify(req.NewPassword, storedHash))
+            // Mật khẩu mới phải khác mật khẩu hiện tại (áp dụng cho cả BCrypt lẫn legacy SHA-256).
+            if (req.NewPassword == req.CurrentPassword
+                || (upgradeHash == null && PasswordHelper.Verify(req.NewPassword, storedHash)))
                 return (false, "New password must be different from the current password");
 
             string newHash = PasswordHelper.Hash(req.NewPassword);
@@ -161,18 +169,32 @@ namespace GymManagement.Api.Services
 
             // Tự tạo hồ sơ hội viên + gán chi nhánh mặc định + liên kết với tài khoản,
             // để hội viên đăng nhập là dùng được portal ngay, không cần admin can thiệp.
-            int memberId = _memberRepo.Add(new MemberRequest
+            // Nếu tạo Member hoặc Link thất bại -> rollback xóa Account để không để lại tài khoản mồ côi.
+            int memberId = 0;
+            try
             {
-                FullName = fullName,
-                Phone = phone,
-                Email = email,
-                BranchId = _repo.GetDefaultBranchId()
-            });
+                memberId = _memberRepo.Add(new MemberRequest
+                {
+                    FullName = fullName,
+                    Phone = phone ?? string.Empty,
+                    Email = email,
+                    BranchId = _repo.GetDefaultBranchId()
+                });
 
-            int linkResult = _linkRepo.Link(memberId, accountId);
-            if (linkResult != 0)
-                throw new AppException(
-                    "Tài khoản đã tạo nhưng không liên kết được với hồ sơ hội viên. Vui lòng liên hệ quản trị viên.", 500);
+                int linkResult = _linkRepo.Link(memberId, accountId);
+                if (linkResult != 0)
+                    throw new AppException(
+                        "Tài khoản đã tạo nhưng không liên kết được với hồ sơ hội viên. Vui lòng liên hệ quản trị viên.", 500);
+            }
+            catch
+            {
+                if (memberId > 0)
+                {
+                    try { _memberRepo.Delete(memberId); } catch { /* bỏ qua lỗi cleanup phụ */ }
+                }
+                try { _repo.DeleteAccount(accountId); } catch { /* bỏ qua lỗi cleanup phụ */ }
+                throw;
+            }
 
             return (true, "Registration successful", accountId);
         }
